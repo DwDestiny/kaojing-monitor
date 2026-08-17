@@ -247,3 +247,4 @@ npm run build         # 构建生产版本
 
 **最后更新**: 2026-08-17 17:30
 # trigger rebuild
+# Force rebuild - Mon Aug 17 21:37:47 CST 2026
