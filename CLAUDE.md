@@ -82,14 +82,47 @@
 ### ✅ 已完成
 - [x] 后端 API 全部正常（stats、公告列表、公告详情、地区列表）
 - [x] D1 数据库已导入 1424 条公告 + 126 个网站配置
-- [x] 前端静态导出成功（本地构建验证通过）
-- [x] 前端代码已推送到 GitHub（commit `0ca374d`）
-- [x] 线上 404 问题已解决（2026-08-17 21:55 排查确认）：根因是早期 bundle 未硬编码 API URL，浏览器请求相对路径 `pages.dev/api/*` 返回 404；当前 bundle 已硬编码完整 URL，全链路验证 200
+- [x] 前端静态导出成功并部署（commit `a5b6a7b`）
+- [x] 线上 404 问题已解决（详见下方「排查记录」）
+- [x] 后端支持科目筛选（`examCategory`）和排序（`sortBy`/`sortOrder`）
 
 ### ⚠️ 待处理
 - [ ] GitHub Actions workflow 已改为手动触发（备用通道），如需启用需配置 `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` secrets
-- [ ] 后端已支持 `examCategory` / `sortBy` / `sortOrder` 参数（2026-08-17 修改），待重新部署 Worker 生效
+- [ ] 后端新参数（`examCategory` / `sortBy` / `sortOrder`）需重新部署 Worker 生效：`cd api && wrangler deploy`
 - [ ] about 页「提交新网站」表单待实现（当前为占位文案）
+
+---
+
+## 🐛 404 问题排查记录（2026-08-17 19:00 - 22:00）
+
+**现象**：CF Pages 部署成功，但前端显示"请求失败 (404)"
+
+**排查过程**：
+1. **环境变量方案（失败）**：在 CF Pages Dashboard 设置 `NEXT_PUBLIC_API_BASE_URL` → 发现环境变量不会注入到 `npm run build`
+2. **next.config.mjs env 字段（失败）**：添加 `env: { NEXT_PUBLIC_API_BASE_URL: '...' }` → `process.env` 在构建时仍为空
+3. **硬编码 API URL（正确方案）**：修改 `lib/api.ts` 的 `getApiBase()`，浏览器环境直接返回完整 Workers URL（commit `fb2aef0`）
+4. **误判为"未解决"**：curl 测试确认生产环境 bundle 已包含 API URL，但用户截图仍显示 404
+
+**根因定位（2026-08-17 22:00）**：
+
+用户访问的是 **CF Pages 预览部署 URL**（`https://394512bf.kaojing-monitor.pages.dev`），而非生产 URL（`https://kaojing-monitor.pages.dev`）。
+
+| | 预览部署（旧版） | 生产部署（新版） |
+|---|---|---|
+| URL | `394512bf.kaojing-monitor.pages.dev` | `kaojing-monitor.pages.dev` |
+| bundle 来源 | 旧 commit（无硬编码 API URL） | 最新 commit（含硬编码 API URL） |
+| API 请求 | 相对路径 `/api/*` → 404 | 绝对路径 `kaojing-api...workers.dev` → 200 |
+| 验证结果 | curl 检查 0 次出现 `dangwei121105` | curl 检查 847 chunk 中包含完整 URL |
+
+**解决方案**：
+- 用户使用生产 URL（`kaojing-monitor.pages.dev`）即可正常访问
+- （可选）在 CF Pages Dashboard 禁用 Preview deployments 避免混淆
+
+**经验教训**：
+1. CF Pages 预览部署和生产部署是**完全独立的 bundle**，预览域名不会自动使用生产环境最新代码
+2. 排查 404 时**首先确认用户访问的 URL**（不要假设是生产域名）
+3. `fetchStats().catch(() => MOCK_STATS)` 会静默吞掉错误并显示 mock 数据（1243），掩盖真实 API 失败
+4. CF Pages Dashboard 的环境变量**只对 Pages Functions（运行时）生效**，不会注入到 `npm run build` 构建阶段
 
 ---
 
