@@ -58,8 +58,11 @@ async function getAnnouncements(request, env) {
   const params = {
     region: url.searchParams.get('region'),
     examType: url.searchParams.get('examType'),
+    examCategory: url.searchParams.get('examCategory'),
     startDate: url.searchParams.get('startDate'),
     endDate: url.searchParams.get('endDate'),
+    sortBy: url.searchParams.get('sortBy'),
+    sortOrder: url.searchParams.get('sortOrder'),
     page: parseInt(url.searchParams.get('page') || '1'),
     pageSize: parseInt(url.searchParams.get('pageSize') || '20')
   };
@@ -78,6 +81,12 @@ async function getAnnouncements(request, env) {
     sqlParams.push(params.examType);
   }
 
+  // 科目筛选（exam_subjects 为 JSON 数组字符串或逗号/顿号分隔文本）
+  if (params.examCategory) {
+    sql += ' AND exam_subjects LIKE ?';
+    sqlParams.push(`%${params.examCategory}%`);
+  }
+
   if (params.startDate) {
     sql += ' AND publish_date >= ?';
     sqlParams.push(params.startDate);
@@ -88,7 +97,12 @@ async function getAnnouncements(request, env) {
     sqlParams.push(params.endDate);
   }
 
-  sql += ' ORDER BY publish_date DESC, id DESC';
+  // 排序（白名单字段，防止 SQL 注入）
+  const sortWhitelist = { publish_date: 'publish_date', id: 'id', title: 'title' };
+  const sortBy = sortWhitelist[params.sortBy] || 'publish_date';
+  const sortOrder = (params.sortOrder || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+  sql += ` ORDER BY ${sortBy} ${sortOrder}, id DESC`;
+
   sql += ' LIMIT ? OFFSET ?';
   sqlParams.push(params.pageSize, (params.page - 1) * params.pageSize);
 
@@ -105,6 +119,10 @@ async function getAnnouncements(request, env) {
   if (params.examType) {
     countSql += ' AND exam_type = ?';
     countParams.push(params.examType);
+  }
+  if (params.examCategory) {
+    countSql += ' AND exam_subjects LIKE ?';
+    countParams.push(`%${params.examCategory}%`);
   }
   if (params.startDate) {
     countSql += ' AND publish_date >= ?';

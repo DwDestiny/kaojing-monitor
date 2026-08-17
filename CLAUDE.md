@@ -19,10 +19,10 @@
 ## 技术栈（已定）
 
 ### 后端
-- **Workers API**：Cloudflare Workers（Hono 框架）
+- **Workers API**：Cloudflare Workers（原生 fetch 路由，单文件 `api/src/index.js`）
 - **数据库**：Cloudflare D1（SQLite）
 - **定时任务**：Cloudflare Cron Triggers（每天 2:07 和 14:23）
-- **部署**：`wrangler deploy`
+- **部署**：`wrangler deploy`（`cd api && wrangler deploy`）
 
 ### 前端
 - **框架**：Next.js 14.2.35（静态导出 `output: 'export'`）
@@ -41,9 +41,7 @@
 ```
 /api                    # Cloudflare Workers 后端
   /src
-    /crawler            # 爬虫引擎与网站配置
-    /routes             # API 路由（公告、统计、地区）
-    index.js            # Workers 入口 + Cron 调度
+    index.js            # Workers 入口：路由（公告/统计/地区/反馈）+ Cron 调度
   wrangler.toml         # Workers 配置（D1 绑定、Cron 表达式）
   schema.sql            # D1 数据库 Schema
 
@@ -85,32 +83,13 @@
 - [x] 后端 API 全部正常（stats、公告列表、公告详情、地区列表）
 - [x] D1 数据库已导入 1424 条公告 + 126 个网站配置
 - [x] 前端静态导出成功（本地构建验证通过）
-- [x] 前端代码已推送到 GitHub（commit `2e4820b`）
+- [x] 前端代码已推送到 GitHub（commit `0ca374d`）
+- [x] 线上 404 问题已解决（2026-08-17 21:55 排查确认）：根因是早期 bundle 未硬编码 API URL，浏览器请求相对路径 `pages.dev/api/*` 返回 404；当前 bundle 已硬编码完整 URL，全链路验证 200
 
-### ❌ 当前阻塞问题
-
-**现象**：CF Pages 部署成功，但前端仍显示"请求失败 (404)"
-
-**已排查**：
-1. ✅ 后端 API 正常（直接 curl 测试通过）
-2. ✅ 本地构建正常（API URL 已打包进 JS bundle）
-3. ✅ GitHub 推送成功（commit `2e4820b` 已触发部署）
-4. ❌ 线上 JS bundle 里**没有 API URL**（`curl` 检查无 `dangwei121105` 字符串）
-
-**根因猜测**：
-- **最可能**：CF Pages 构建缓存未清除，仍在用旧的 bundle（commit `f741b7d` 之前的版本）
-- **次可能**：GitHub 连接断开，CF Pages 未拉取最新 commit
-- **低可能**：CF Pages 的 `npm run build` 与本地行为不一致
-
-**待验证**：
-1. CF Dashboard Deployments 页面最新部署的 commit 是否为 `2e4820b`
-2. 部署状态是 Success / Building / Failed
-3. 如果是 Success，线上 bundle 的文件名是否与本地一致
-
-**下一步行动**（等用户提供截图后）：
-- 如果最新部署不是 `2e4820b` → 检查 GitHub 连接或手动触发部署
-- 如果是 `2e4820b` 且 Success → 清除 CF Pages 缓存 + CDN 缓存
-- 如果反复失败 → 考虑走 GitHub Actions 自建构建（已准备 workflow）
+### ⚠️ 待处理
+- [ ] GitHub Actions workflow 已改为手动触发（备用通道），如需启用需配置 `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` secrets
+- [ ] 后端已支持 `examCategory` / `sortBy` / `sortOrder` 参数（2026-08-17 修改），待重新部署 Worker 生效
+- [ ] about 页「提交新网站」表单待实现（当前为占位文案）
 
 ---
 
@@ -146,6 +125,7 @@ Workers 配置：
 
 ## 变更记录
 
+- 2026-08-17 21:55：404 问题排查结案——线上已恢复正常，根因=早期 bundle 未硬编码 API URL；后端补全 examCategory/sortBy/sortOrder 参数；GitHub Actions 改手动触发防双通道
 - 2026-08-17 21:40：项目文档系统性整理（GEB L1）
 - 2026-08-17 21:33：前端改为硬编码 API URL（commit `fb2aef0`）
 - 2026-08-17 21:29：前端 `next.config.mjs` 添加 env 配置（commit `56effba`）

@@ -1,9 +1,12 @@
+# 注意：本项目前端部署走 Cloudflare Pages 原生 Git 集成（push 到 main 自动构建）。
+# 本 workflow 与原生集成是两条独立部署通道，若同时启用会在每次 push 时互相覆盖，
+# 导致线上出现「index.html 与静态资源来自不同构建」的混用问题（曾引发 404）。
+# 因此这里改为仅手动触发（workflow_dispatch）作为备用通道，不会自动运行。
+# 如需使用本通道，请先在 GitHub Secrets 配置 CLOUDFLARE_API_TOKEN 与 CLOUDFLARE_ACCOUNT_ID。
 name: Build and Deploy to Cloudflare Pages
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
   deploy:
