@@ -49,20 +49,16 @@ interface RawAnnouncement {
 }
 
 function getApiBase(): string {
+  // 生产环境：直接返回 Workers API URL
+  if (typeof window !== "undefined") {
+    return "https://kaojing-api.dangwei121105.workers.dev";
+  }
+
+  // 本地开发：服务端直连本地 Workers
   if (process.env.API_BASE_URL) {
     return process.env.API_BASE_URL.replace(/\/$/, "");
   }
-  // 服务端直连 Workers，避免 SSR 自请求死锁
-  if (typeof window === "undefined") {
-    return (
-      process.env.API_PROXY_TARGET || "http://127.0.0.1:8787"
-    ).replace(/\/$/, "");
-  }
-  if (process.env.NEXT_PUBLIC_API_BASE_URL) {
-    return process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/$/, "");
-  }
-  // 浏览器走相对路径，由 next rewrites 代理
-  return "";
+  return (process.env.API_PROXY_TARGET || "http://127.0.0.1:8787").replace(/\/$/, "");
 }
 
 function parseSubjects(value: string | string[] | null | undefined): string[] {
