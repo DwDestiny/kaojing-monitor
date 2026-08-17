@@ -1,0 +1,54 @@
+- generic [active] [ref=f2e1]:
+  - banner [ref=f2e2]:
+    - generic [ref=f2e3]:
+      - link "考情监测首页" [ref=f2e4] [cursor=pointer]:
+        - /url: /
+        - text: 考情监测
+      - navigation "主导航" [ref=f2e5]:
+        - link "最新公告" [ref=f2e6] [cursor=pointer]:
+          - /url: /#announcements
+        - link "关于" [ref=f2e7] [cursor=pointer]:
+          - /url: /about
+        - link "帮助" [ref=f2e8] [cursor=pointer]:
+          - /url: /about#help
+      - link "提交新网站" [ref=f2e9] [cursor=pointer]:
+        - /url: /about#submit
+  - main [ref=f2e10]:
+    - generic [ref=f2e12]:
+      - heading "关于考情监测" [level=1] [ref=f2e13]
+      - paragraph [ref=f2e14]: 事业单位招考信息自动化监测与展示平台，帮你从海量公告里快速找到目标考试。
+    - generic [ref=f2e15]:
+      - region [ref=f2e16]:
+        - heading "产品定位" [level=2] [ref=f2e17]
+        - list [ref=f2e18]:
+          - listitem [ref=f2e19]: 自动爬取全网招考公告，解放手动查询时间
+          - listitem [ref=f2e21]: 结构化展示，支持地区 / 考试类型 / 科目筛选
+          - listitem [ref=f2e23]: 建立考情信息资产库，持续更新
+      - region [ref=f2e25]:
+        - heading "帮助" [level=2] [ref=f2e26]
+        - generic [ref=f2e27]:
+          - paragraph [ref=f2e28]:
+            - strong [ref=f2e29]: 如何筛选公告？
+            - text: 在首页左侧选择地区、考试类型或科目，列表会自动刷新。
+          - paragraph [ref=f2e30]:
+            - strong [ref=f2e31]: 数据多久更新？
+            - text: 爬虫按小时定时采集，页面每 60 秒可重新校验缓存。
+          - paragraph [ref=f2e32]:
+            - strong [ref=f2e33]: 发现数据错误？
+            - text: 请通过下方「提交新网站」反馈，我们会人工审核处理。
+      - region [ref=f2e34]:
+        - heading "提交新网站" [level=2] [ref=f2e35]
+        - paragraph [ref=f2e36]: 如果你知道尚未收录的招考官网，欢迎提交。当前版本收集申请后由人工审核接入（完整表单接口将在后续版本开放）。
+        - generic [ref=f2e37]:
+          - paragraph [ref=f2e38]: 临时反馈方式
+          - paragraph [ref=f2e39]: 请准备：网站名称、URL、所属地区、简要说明。后续可在此页直接提交。
+      - link "返回首页查看公告" [ref=f2e40] [cursor=pointer]:
+        - /url: /
+    - contentinfo [ref=f2e41]:
+      - generic [ref=f2e42]:
+        - paragraph [ref=f2e43]: © 2026 考情监测 · 数据每小时自动更新
+        - paragraph [ref=f2e44]:
+          - text: 最后更新：— ·
+          - link "提交新网站" [ref=f2e45] [cursor=pointer]:
+            - /url: /about#submit
+  - alert [ref=f2e46]

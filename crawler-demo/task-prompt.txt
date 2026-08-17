@@ -1,0 +1,79 @@
+编写新疆兵团人事考试网爬虫 Demo
+
+## 任务目标
+创建一个 Node.js 爬虫 Demo，验证新疆兵团人事考试网的数据抓取能力。
+
+## 目标网站
+- URL: http://btpta.xjbt.gov.cn/tzgg/
+- 网站结构已知（见下方 HTML 结构参考）
+
+## 需要创建的文件
+
+### 1. package.json
+- 项目名称: crawler-demo-xinjiang
+- 版本: 1.0.0
+- type: module（启用 ES Modules）
+- 依赖项:
+  - axios: ^1.7.0
+  - cheerio: ^1.0.0
+- scripts:
+  - test: node test-xinjiang.js
+
+### 2. test-xinjiang.js
+实现爬虫逻辑，技术要求：
+
+**HTTP 请求配置**:
+- 使用 axios 获取 HTML
+- User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36
+- 超时时间: 10000ms (10秒)
+
+**解析逻辑**:
+- 使用 cheerio 解析 HTML
+- 选择器: ul.con li
+- 提取字段:
+  1. 标题: 优先从 a[title] 属性取值，如果没有则从 a 标签文本内容取值（需要 trim）
+  2. URL: 从 a[href] 取值，转换为绝对路径（http://btpta.xjbt.gov.cn + href）
+  3. 发布日期: 从 span.fr 的文本内容取值（需要 trim）
+
+**输出要求**:
+- 输出前 20 条数据
+- JSON 格式，使用 JSON.stringify 带缩进（2 空格）
+- 每条数据格式:
+  {
+    "title": "公告标题",
+    "url": "完整URL",
+    "publishDate": "2026-08-14"
+  }
+
+**错误处理**:
+- 使用 try-catch 包裹主逻辑
+- 网络请求失败时输出错误信息
+- 解析失败时输出错误信息
+
+**日志输出**:
+- 开始抓取时输出目标 URL
+- 成功后输出抓取到的数据条数
+- 失败后输出详细错误信息
+
+## HTML 结构参考
+```html
+<ul class="con">
+  <li>
+    <span class="fr">2026-08-14</span>
+    <a target="_blank" href="/c/2026-08-14/8499275.shtml" title="完整标题">
+      显示标题（可能被截断）
+    </a>
+  </li>
+</ul>
+```
+
+## 验收标准
+1. 代码使用 ES Modules（import/export）
+2. 能成功抓取并解析目标网站
+3. 输出格式正确的 JSON 数据
+4. 包含完整的错误处理和日志
+5. 代码注释清晰
+
+工作目录: /Users/dw/Desktop/张晗/粉笔/考情监测/crawler-demo
+
+请直接创建文件，不要只输出代码内容。

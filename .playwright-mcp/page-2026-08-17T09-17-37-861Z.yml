@@ -1,0 +1,232 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "考情监测首页" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - text: 考情监测
+      - navigation "主导航" [ref=e5]:
+        - link "最新公告" [ref=e6] [cursor=pointer]:
+          - /url: /#announcements
+        - link "关于" [ref=e7] [cursor=pointer]:
+          - /url: /about
+        - link "帮助" [ref=e8] [cursor=pointer]:
+          - /url: /about#help
+      - link "提交新网站" [ref=e9] [cursor=pointer]:
+        - /url: /about#submit
+  - main [ref=e10]:
+    - region [ref=e11]:
+      - generic [ref=e12]:
+        - heading [level=1] [ref=e13]:
+          - generic [ref=e14]: 事业单位招考信息
+          - text: 自动化监测
+        - paragraph [ref=e15]: 全网公告自动采集，多维度筛选，不错过任何考试机会
+    - region "数据统计" [ref=e16]:
+      - article [ref=e17]:
+        - generic [ref=e18]: 总公告数
+        - generic [ref=e19]: 1,243
+        - generic [ref=e20]: 较昨日 +18
+      - article [ref=e21]:
+        - generic [ref=e22]: 本周新增
+        - generic [ref=e23]: "68"
+        - generic [ref=e24]: 环比 +12%
+      - article [ref=e25]:
+        - generic [ref=e26]: 即将开考
+        - generic [ref=e27]: "23"
+        - generic [ref=e28]: 7 天内
+      - article [ref=e29]:
+        - generic [ref=e30]: 覆盖地区
+        - generic [ref=e31]: "32"
+        - generic [ref=e32]: 主要省市
+    - generic [ref=e34]:
+      - complementary "筛选条件" [ref=e35]:
+        - generic [ref=e36]:
+          - heading "地区" [level=2] [ref=e37]
+          - list [ref=e38]:
+            - listitem [ref=e39]:
+              - link "全部 1243" [ref=e40] [cursor=pointer]:
+                - /url: /
+                - generic [ref=e41]: 全部
+                - generic [ref=e42]: "1243"
+            - listitem [ref=e43]:
+              - link "新疆 156" [ref=e44] [cursor=pointer]:
+                - /url: /?region=%E6%96%B0%E7%96%86
+                - generic [ref=e45]: 新疆
+                - generic [ref=e46]: "156"
+            - listitem [ref=e47]:
+              - link "北京 89" [ref=e48] [cursor=pointer]:
+                - /url: /?region=%E5%8C%97%E4%BA%AC
+                - generic [ref=e49]: 北京
+                - generic [ref=e50]: "89"
+            - listitem [ref=e51]:
+              - link "上海 67" [ref=e52] [cursor=pointer]:
+                - /url: /?region=%E4%B8%8A%E6%B5%B7
+                - generic [ref=e53]: 上海
+                - generic [ref=e54]: "67"
+            - listitem [ref=e55]:
+              - link "广东 124" [ref=e56] [cursor=pointer]:
+                - /url: /?region=%E5%B9%BF%E4%B8%9C
+                - generic [ref=e57]: 广东
+                - generic [ref=e58]: "124"
+            - listitem [ref=e59]:
+              - link "四川 98" [ref=e60] [cursor=pointer]:
+                - /url: /?region=%E5%9B%9B%E5%B7%9D
+                - generic [ref=e61]: 四川
+                - generic [ref=e62]: "98"
+        - generic [ref=e63]:
+          - heading "考试类型" [level=2] [ref=e64]
+          - list [ref=e65]:
+            - listitem [ref=e66]:
+              - link "全部" [ref=e67] [cursor=pointer]:
+                - /url: /
+            - listitem [ref=e69]:
+              - link "事业单位 567" [ref=e70] [cursor=pointer]:
+                - /url: /?examType=%E4%BA%8B%E4%B8%9A%E5%8D%95%E4%BD%8D
+                - generic [ref=e71]: 事业单位
+                - generic [ref=e72]: "567"
+            - listitem [ref=e73]:
+              - link "教师招聘 442" [ref=e74] [cursor=pointer]:
+                - /url: /?examType=%E6%95%99%E5%B8%88%E6%8B%9B%E8%81%98
+                - generic [ref=e75]: 教师招聘
+                - generic [ref=e76]: "442"
+            - listitem [ref=e77]:
+              - link "三支一扶 234" [ref=e78] [cursor=pointer]:
+                - /url: /?examType=%E4%B8%89%E6%94%AF%E4%B8%80%E6%89%B6
+                - generic [ref=e79]: 三支一扶
+                - generic [ref=e80]: "234"
+        - generic [ref=e81]:
+          - heading "考试科目" [level=2] [ref=e82]
+          - list [ref=e83]:
+            - listitem [ref=e84]:
+              - link "全部" [ref=e85] [cursor=pointer]:
+                - /url: /
+            - listitem [ref=e87]:
+              - link "职测" [ref=e88] [cursor=pointer]:
+                - /url: /?subject=%E8%81%8C%E6%B5%8B
+            - listitem [ref=e90]:
+              - link "公基" [ref=e91] [cursor=pointer]:
+                - /url: /?subject=%E5%85%AC%E5%9F%BA
+            - listitem [ref=e93]:
+              - link "综合" [ref=e94] [cursor=pointer]:
+                - /url: /?subject=%E7%BB%BC%E5%90%88
+      - region "公告列表" [ref=e96]:
+        - generic [ref=e97]:
+          - article [ref=e98]:
+            - generic [ref=e99]:
+              - link "新疆生产建设兵团第五师双河市2026年高校毕业生\"三支一扶\"计划招募公告" [ref=e100] [cursor=pointer]:
+                - /url: /announcements/1
+              - generic "新公告" [ref=e101]: 新
+            - generic [ref=e102]:
+              - generic [ref=e103]:
+                - generic [ref=e104]: 招聘
+                - generic [ref=e105]: 49 人
+              - generic [ref=e106]:
+                - generic [ref=e107]: 笔试
+                - generic [ref=e108]: 2026-07-12 10:00-12:30
+              - generic [ref=e109]:
+                - generic [ref=e110]: 科目
+                - generic [ref=e111]: 职测、综合应用能力
+            - generic "标签" [ref=e112]:
+              - generic [ref=e113]: 新疆
+              - generic [ref=e114]: 三支一扶
+              - generic [ref=e115]: 职测
+              - generic [ref=e116]: 综合应用
+          - article [ref=e117]:
+            - generic [ref=e118]:
+              - link "新疆生产建设兵团第九师白杨市2026年\"三支一扶\"计划人员招募公告" [ref=e119] [cursor=pointer]:
+                - /url: /announcements/2
+              - generic "热门公告" [ref=e120]: 热
+            - generic [ref=e121]:
+              - generic [ref=e122]:
+                - generic [ref=e123]: 招聘
+                - generic [ref=e124]: 71 人
+              - generic [ref=e125]:
+                - generic [ref=e126]: 笔试
+                - generic [ref=e127]: 2026-07-12 10:00-12:30
+              - generic [ref=e128]:
+                - generic [ref=e129]: 科目
+                - generic [ref=e130]: 职测、综合应用能力
+            - generic "标签" [ref=e131]:
+              - generic [ref=e132]: 新疆
+              - generic [ref=e133]: 三支一扶
+              - generic [ref=e134]: 职测
+              - generic [ref=e135]: 综合应用
+          - article [ref=e136]:
+            - link "北京市朝阳区2026年事业单位公开招聘工作人员公告" [ref=e138] [cursor=pointer]:
+              - /url: /announcements/3
+            - generic [ref=e139]:
+              - generic [ref=e140]:
+                - generic [ref=e141]: 招聘
+                - generic [ref=e142]: 135 人
+              - generic [ref=e143]:
+                - generic [ref=e144]: 笔试
+                - generic [ref=e145]: 2026-07-18 09:00-11:30
+              - generic [ref=e146]:
+                - generic [ref=e147]: 科目
+                - generic [ref=e148]: 公基、职测
+            - generic "标签" [ref=e149]:
+              - generic [ref=e150]: 北京
+              - generic [ref=e151]: 事业单位
+              - generic [ref=e152]: 公基
+              - generic [ref=e153]: 职测
+          - article [ref=e154]:
+            - link "上海市浦东新区教育系统2026年第二批教师招聘公告" [ref=e156] [cursor=pointer]:
+              - /url: /announcements/4
+            - generic [ref=e157]:
+              - generic [ref=e158]:
+                - generic [ref=e159]: 招聘
+                - generic [ref=e160]: 268 人
+              - generic [ref=e161]:
+                - generic [ref=e162]: 笔试
+                - generic [ref=e163]: 2026-07-20 13:30-15:30
+              - generic [ref=e164]:
+                - generic [ref=e165]: 科目
+                - generic [ref=e166]: 教育综合、专业知识
+            - generic "标签" [ref=e167]:
+              - generic [ref=e168]: 上海
+              - generic [ref=e169]: 教师招聘
+              - generic [ref=e170]: 教育综合
+              - generic [ref=e171]: 专业知识
+          - article [ref=e172]:
+            - link "广东省广州市天河区2026年事业单位集中公开招聘工作人员公告" [ref=e174] [cursor=pointer]:
+              - /url: /announcements/5
+            - generic [ref=e175]:
+              - generic [ref=e176]:
+                - generic [ref=e177]: 招聘
+                - generic [ref=e178]: 89 人
+              - generic [ref=e179]:
+                - generic [ref=e180]: 笔试
+                - generic [ref=e181]: 2026-07-25 09:00-11:00
+              - generic [ref=e182]:
+                - generic [ref=e183]: 科目
+                - generic [ref=e184]: 公基、职测、专业知识
+            - generic "标签" [ref=e185]:
+              - generic [ref=e186]: 广东
+              - generic [ref=e187]: 事业单位
+              - generic [ref=e188]: 公基
+              - generic [ref=e189]: 职测
+              - generic [ref=e190]: 专业知识
+          - article [ref=e191]:
+            - link "四川省成都市金牛区2026年事业单位公开招聘公告" [ref=e193] [cursor=pointer]:
+              - /url: /announcements/6
+            - generic [ref=e194]:
+              - generic [ref=e195]:
+                - generic [ref=e196]: 招聘
+                - generic [ref=e197]: 112 人
+              - generic [ref=e198]:
+                - generic [ref=e199]: 笔试
+                - generic [ref=e200]: 2026-07-28 14:00-16:00
+              - generic [ref=e201]:
+                - generic [ref=e202]: 科目
+                - generic [ref=e203]: 综合知识
+            - generic "标签" [ref=e204]:
+              - generic [ref=e205]: 四川
+              - generic [ref=e206]: 事业单位
+              - generic [ref=e207]: 综合知识
+    - contentinfo [ref=e208]:
+      - generic [ref=e209]:
+        - paragraph [ref=e210]: © 2026 考情监测 · 数据每小时自动更新
+        - paragraph [ref=e211]:
+          - text: 最后更新：2026-08-17 14:30 ·
+          - link "提交新网站" [ref=e212] [cursor=pointer]:
+            - /url: /about#submit
+  - alert [ref=e213]

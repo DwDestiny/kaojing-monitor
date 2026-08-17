@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>考情监测 - 事业单位招考信息自动化平台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --primary-light: #dbeafe;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            background: var(--gray-50);
+            color: var(--gray-900);
+            line-height: 1.6;
+        }
+
+        /* Header */
+        header {
+            background: white;
+            border-bottom: 1px solid var(--gray-200);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .header-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: var(--gray-900);
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--primary), #3b82f6);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .logo-text {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        nav ul {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: var(--gray-600);
+            font-size: 15px;
+            transition: color 0.2s;
+        }
+
+        nav a:hover {
+            color: var(--primary);
+        }
+
+        .btn-submit {
+            background: var(--primary);
+            color: white;
+            padding: 0.5rem 1.25rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-submit:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 3rem 1.5rem;
+        }
+
+        .hero-container {
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .hero p {
+            font-size: 1.125rem;
+            opacity: 0.95;
+            max-width: 600px;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            max-width: 1280px;
+            margin: -2rem auto 3rem;
+            padding: 0 1.5rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-lg);
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .stat-label {
+            color: var(--gray-600);
+            font-size: 14px;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .stat-change {
+            font-size: 13px;
+            color: var(--success);
+            margin-top: 0.5rem;
+        }
+
+        /* Main Content */
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 1.5rem 3rem;
+        }
+
+        .content-wrapper {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 2rem;
+        }
+
+        /* Filter Sidebar */
+        .filter-sidebar {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            height: fit-content;
+            position: sticky;
+            top: 100px;
+            box-shadow: var(--shadow);
+        }
+
+        .filter-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .filter-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 0.75rem;
+        }
+
+        .filter-option {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem 0;
+            cursor: pointer;
+        }
+
+        .filter-option input[type="checkbox"] {
+            margin-right: 0.5rem;
+        }
+
+        .filter-option label {
+            font-size: 14px;
+            color: var(--gray-700);
+            cursor: pointer;
+        }
+
+        .filter-option:hover label {
+            color: var(--primary);
+        }
+
+        .date-filter {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .date-filter input {
+            padding: 0.5rem;
+            border: 1px solid var(--gray-300);
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        /* Announcement List */
+        .announcement-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .announcement-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: all 0.2s;
+            border-left: 4px solid transparent;
+        }
+
+        .announcement-card:hover {
+            box-shadow: var(--shadow-md);
+            border-left-color: var(--primary);
+            transform: translateX(4px);
+        }
+
+        .announcement-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .announcement-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--gray-900);
+            line-height: 1.4;
+            flex: 1;
+            text-decoration: none;
+        }
+
+        .announcement-title:hover {
+            color: var(--primary);
+        }
+
+        .announcement-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            margin-left: 1rem;
+        }
+
+        .badge-new {
+            background: var(--danger);
+            color: white;
+        }
+
+        .badge-hot {
+            background: var(--warning);
+            color: white;
+        }
+
+        .announcement-meta {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 14px;
+            color: var(--gray-600);
+        }
+
+        .meta-icon {
+            width: 16px;
+            height: 16px;
+            color: var(--gray-400);
+        }
+
+        .meta-highlight {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .announcement-tags {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            padding: 0.25rem 0.75rem;
+            background: var(--gray-100);
+            border-radius: 6px;
+            font-size: 13px;
+            color: var(--gray-700);
+        }
+
+        .tag-region {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .tag-type {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .empty-text {
+            font-size: 18px;
+            color: var(--gray-600);
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 2rem;
+        }
+
+        .page-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--gray-300);
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .page-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .page-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Footer */
+        footer {
+            background: white;
+            border-top: 1px solid var(--gray-200);
+            padding: 2rem 1.5rem;
+            margin-top: 4rem;
+        }
+
+        .footer-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            text-align: center;
+            color: var(--gray-600);
+            font-size: 14px;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .content-wrapper {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-sidebar {
+                position: static;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .header-container {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            nav ul {
+                gap: 1rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-container">
+            <a href="/" class="logo">
+                <div class="logo-icon">考</div>
+                <span class="logo-text">考情监测</span>
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="#announcements">最新公告</a></li>
+                    <li><a href="#about">关于我们</a></li>
+                    <li><a href="#help">使用帮助</a></li>
+                </ul>
+            </nav>
+            <a href="#submit" class="btn-submit">提交新网站</a>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-container">
+            <h1>事业单位招考信息自动化监测</h1>
+            <p>全网招考公告自动采集，多维度筛选，不错过任何考试机会</p>
+        </div>
+    </section>
+
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">总公告数</div>
+            <div class="stat-value">1,243</div>
+            <div class="stat-change">↑ 较昨日 +18</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">本周新增</div>
+            <div class="stat-value">68</div>
+            <div class="stat-change">↑ 环比 +12%</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">即将开考</div>
+            <div class="stat-value">23</div>
+            <div class="stat-change">最近 7 天内</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">覆盖地区</div>
+            <div class="stat-value">32</div>
+            <div class="stat-change">全国主要省市</div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="content-wrapper">
+            <!-- Filter Sidebar -->
+            <aside class="filter-sidebar">
+                <div class="filter-section">
+                    <div class="filter-title">地区</div>
+                    <div class="filter-option">
+                        <input type="checkbox" id="region-xinjiang">
+                        <label for="region-xinjiang">新疆 (156)</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" id="region-beijing">
+                        <label for="region-beijing">北京 (89)</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" id="region-shanghai">
+                        <label for="region-shanghai">上海 (67)</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" id="region-guangdong">
+                        <label for="region-guangdong">广东 (124)</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" id="region-sichuan">
+                        <label for="region-sichuan">四川 (98)</label>
+                    </div>
+                </div>
+
+                <div class="filter-section">
+                    <div class="filter-title">考试类型</div>
+                    <div class="filter-option">
+                        <input type="checkbox" id="type-szyf">
+                        <label for="type-szyf">三支一扶 (234)</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" id="type-sydw">
+                        <label for="type-sydw">事业单位 (567)</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" id="type-teacher">
+                        <label for="type-teacher">教师招聘 (442)</label>
+                    </div>
+                </div>
+
+                <div class="filter-section">
+                    <div class="filter-title">考试科目</div>
+                    <div class="filter-option">
+                        <input type="checkbox" id="subject-zhice">
+                        <label for="subject-zhice">职测</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" id="subject-gongji">
+                        <label for="subject-gongji">公基</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" id="subject-zonghe">
+                        <label for="subject-zonghe">综合应用</label>
+                    </div>
+                </div>
+
+                <div class="filter-section">
+                    <div class="filter-title">考试时间</div>
+                    <div class="date-filter">
+                        <input type="date" placeholder="开始日期">
+                        <input type="date" placeholder="结束日期">
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Announcement List -->
+            <main>
+                <div class="announcement-list">
+                    <!-- Card 1 -->
+                    <article class="announcement-card">
+                        <div class="announcement-header">
+                            <a href="#" class="announcement-title">
+                                新疆生产建设兵团第五师双河市2026年高校毕业生"三支一扶"计划招募公告
+                            </a>
+                            <span class="announcement-badge badge-new">今日新增</span>
+                        </div>
+                        <div class="announcement-meta">
+                            <div class="meta-item">
+                                <svg class="meta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                                招聘<span class="meta-highlight">49人</span>
+                            </div>
+                            <div class="meta-item">
+                                <svg class="meta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                笔试时间：<span class="meta-highlight">2026-07-12 10:00-12:30</span>
+                            </div>
+                            <div class="meta-item">
+                                <svg class="meta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                </svg>
+                                职测、综合应用能力
+                            </div>
+                        </div>
+                        <div class="announcement-tags">
+                            <span class="tag tag-region">新疆</span>
+                            <span class="tag tag-type">三支一扶</span>
+                            <span class="tag">职测</span>
+                            <span class="tag">综合</span>
+                        </div>
+                    </article>
+
+                    <!-- Card 2 -->
+                    <article class="announcement-card">
+                        <div class="announcement-header">
+                            <a href="#" class="announcement-title">
+                                新疆生产建设兵团第九师白杨市2026年"三支一扶"计划人员招募公告
+                            </a>
+                            <span class="announcement-badge badge-hot">热门</span>
+                        </div>
+                        <div class="announcement-meta">
+                            <div class="meta-item">
+                                <svg class="meta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                                招聘<span class="meta-highlight">71人</span>
+                            </div>
+                            <div class="meta-item">
+                                <svg class="meta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                笔试时间：<span class="meta-highlight">2026-07-12 10:00-12:30</span>
+                            </div>
+                            <div class="meta-item">
+                                <svg class="meta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                </svg>
+                                职测、综合应用能力
+                            </div>
+                        </div>
+                        <div class="announcement-tags">
+                            <span class="tag tag-region">新疆</span>
+                            <span class="tag tag-type">三支一扶</span>
+                            <span class="tag">职测</span>
+                            <span class="tag">综合</span>
+                        </div>
+                    </article>
+
+                    <!-- Card 3 -->
+                    <article class="announcement-card">
+                        <div class="announcement-header">
+                            <a href="#" class="announcement-title">
+                                北京市朝阳区2026年事业单位公开招聘工作人员公告
+                            </a>
+                        </div>
+                        <div class="announcement-meta">
+                            <div class="meta-item">
+                                <svg class="meta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                                招聘<span class="meta-highlight">135人</span>
+                            </div>
+                            <div class="meta-item">
+                                <svg class="meta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                笔试时间：<span class="meta-highlight">2026-07-18 09:00-11:30</span>
+                            </div>
+                            <div class="meta-item">
+                                <svg class="meta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                </svg>
+                                公基、职测
+                            </div>
+                        </div>
+                        <div class="announcement-tags">
+                            <span class="tag tag-region">北京</span>
+                            <span class="tag tag-type">事业单位</span>
+                            <span class="tag">公基</span>
+                            <span class="tag">职测</span>
+                        </div>
+                    </article>
+
+                    <!-- Card 4 -->
+                    <article class="announcement-card">
+                        <div class="announcement-header">
+                            <a href="#" class="announcement-title">
+                                上海市浦东新区教育系统2026年第二批教师招聘公告
+                            </a>
+                        </div>
+                        <div class="announcement-meta">
+                            <div class="meta-item">
+                                <svg class="meta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                                招聘<span class="meta-highlight">268人</span>
+                            </div>
+                            <div class="meta-item">
+                                <svg class="meta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                笔试时间：<span class="meta-highlight">2026-07-20 13:30-15:30</span>
+                            </div>
+                            <div class="meta-item">
+                                <svg class="meta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                </svg>
+                                教育综合知识、专业知识
+                            </div>
+                        </div>
+                        <div class="announcement-tags">
+                            <span class="tag tag-region">上海</span>
+                            <span class="tag tag-type">教师招聘</span>
+                            <span class="tag">教育综合</span>
+                            <span class="tag">专业知识</span>
+                        </div>
+                    </article>
+
+                    <!-- Card 5 -->
+                    <article class="announcement-card">
+                        <div class="announcement-header">
+                            <a href="#" class="announcement-title">
+                                广东省广州市天河区2026年事业单位集中公开招聘工作人员公告
+                            </a>
+                        </div>
+                        <div class="announcement-meta">
+                            <div class="meta-item">
+                                <svg class="meta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                                招聘<span class="meta-highlight">89人</span>
+                            </div>
+                            <div class="meta-item">
+                                <svg class="meta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                笔试时间：<span class="meta-highlight">2026-07-25 09:00-11:00</span>
+                            </div>
+                            <div class="meta-item">
+                                <svg class="meta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                </svg>
+                                公基、职测、专业知识
+                            </div>
+                        </div>
+                        <div class="announcement-tags">
+                            <span class="tag tag-region">广东</span>
+                            <span class="tag tag-type">事业单位</span>
+                            <span class="tag">公基</span>
+                            <span class="tag">职测</span>
+                        </div>
+                    </article>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination">
+                    <button class="page-btn">上一页</button>
+                    <button class="page-btn active">1</button>
+                    <button class="page-btn">2</button>
+                    <button class="page-btn">3</button>
+                    <button class="page-btn">4</button>
+                    <button class="page-btn">5</button>
+                    <button class="page-btn">下一页</button>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-container">
+            <p>© 2026 考情监测. 数据每小时自动更新 | 最后更新：2026-08-17 14:30</p>
+            <p style="margin-top: 0.5rem; font-size: 13px;">发现新的招考网站？<a href="#submit" style="color: var(--primary);">点击提交</a></p>
+        </div>
+    </footer>
+
+    <script>
+        // 简单的交互演示
+        document.querySelectorAll('.filter-option input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                console.log(`筛选器变更: ${this.id} = ${this.checked}`);
+                // 实际项目中这里会触发 API 请求
+            });
+        });
+
+        document.querySelectorAll('.page-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.page-btn').forEach(b => b.classList.remove('active'));
+                if (!this.textContent.includes('上') && !this.textContent.includes('下')) {
+                    this.classList.add('active');
+                }
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        });
+    </script>
+</body>
+</html>

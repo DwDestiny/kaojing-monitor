@@ -1,0 +1,13 @@
+{
+  "name": "crawler-demo-xinjiang",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "新疆兵团人事考试网爬虫 Demo",
+  "scripts": {
+    "test": "node test-xinjiang.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.0",
+    "cheerio": "^1.0.0"
+  }
+}
