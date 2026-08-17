@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // 图片域名（外链图标等）
+  output: 'export',
   images: {
     unoptimized: true,
   },

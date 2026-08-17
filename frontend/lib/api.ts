@@ -136,8 +136,6 @@ async function apiFetch<T>(
         Accept: "application/json",
         ...init?.headers,
       },
-      // 列表页 ISR / 动态刷新
-      next: { revalidate: 60 },
     });
 
     if (!res.ok) {
