@@ -71,7 +71,28 @@ export default function HomeClient() {
       .catch((err) => {
         setListError(err instanceof Error ? err.message : '加载失败');
       })
-      .finally(() => setLoading(false));
+
+      .finally(() => {
+        setLoading(false);
+        
+        // 筛选完成后滚动到列表顶部
+        setTimeout(() => {
+          const listElement = document.getElementById('announcements');
+          if (listElement) {
+            const offset = 80; // 顶部导航栏高度
+            const elementTop = listElement.getBoundingClientRect().top;
+            const scrollTop = window.scrollY || window.pageYOffset;
+            
+            // 只在当前位置高于列表时才滚动
+            if (scrollTop > listElement.offsetTop - offset) {
+              window.scrollTo({
+                top: listElement.offsetTop - offset,
+                behavior: 'smooth'
+              });
+            }
+          }
+        }, 100);
+      });
   }, [region, examType, subject, page]);
 
   return (

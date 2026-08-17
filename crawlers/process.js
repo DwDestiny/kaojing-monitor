@@ -6,34 +6,46 @@
 import { crawl } from './core/engine.js';
 import { extractFields, batchExtract } from './core/extractor.js';
 import { deduplicateByUrl, addHashes } from './core/deduplicator.js';
+import { fetchAllDetails } from './core/detail-fetcher.js';
+import { filterAnnouncements } from './core/ai-filter.js';
 import { readFileSync, writeFileSync } from 'fs';
 
 /**
  * 完整数据处理流程
  * @param {object} siteConfig - 网站配置
- * @param {object} options - 选项 { page, maxPages }
+ * @param {object} options - 选项 { page, maxPages, env }
  * @returns {Array} 处理后的数据
  */
 export async function processData(siteConfig, options = {}) {
   console.log(`\n处理网站: ${siteConfig.name}`);
 
-  // 1. 爬取
-  console.log('  [1/4] 爬取数据...');
+  // 1. 爬取列表页
+  console.log('  [1/6] 爬取列表页...');
   const rawData = await crawl(siteConfig, options);
   console.log(`  ✓ 爬取 ${rawData.length} 条`);
 
-  // 2. 提取字段
-  console.log('  [2/4] 提取字段...');
-  const extracted = batchExtract(rawData);
+  // 2. AI 内容过滤
+  console.log('  [2/6] AI 内容过滤...');
+  const filtered = await filterAnnouncements(rawData, options.env);
+  console.log(`  ✓ 过滤后 ${filtered.length} 条`);
+
+  // 3. 爬取详情页
+  console.log('  [3/6] 爬取详情页...');
+  const withDetails = await fetchAllDetails(filtered);
+  console.log(`  ✓ 详情页爬取完成`);
+
+  // 4. 提取字段
+  console.log('  [4/6] 提取字段...');
+  const extracted = batchExtract(withDetails);
   console.log(`  ✓ 提取完成`);
 
-  // 3. 去重
-  console.log('  [3/4] 去重...');
+  // 5. 去重
+  console.log('  [5/6] 去重...');
   const deduplicated = deduplicateByUrl(extracted);
   console.log(`  ✓ 去重后 ${deduplicated.length} 条`);
 
-  // 4. 添加 hash
-  console.log('  [4/4] 添加 hash...');
+  // 6. 添加 hash
+  console.log('  [6/6] 添加 hash...');
   const withHashes = addHashes(deduplicated);
   console.log(`  ✓ 处理完成`);
 

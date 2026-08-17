@@ -43,9 +43,32 @@ export default {
   },
 
   // Cron 定时任务
+  // 设计：Workers CPU 时间有限，无法直接跑重度爬虫；
+  // Cron 只负责触发记录，实际爬取由 GitHub Actions / VPS 等外部执行器完成。
   async scheduled(event, env, ctx) {
     console.log('Cron triggered at:', new Date().toISOString());
-    // TODO: 实现定时爬取逻辑
+    console.log('Cron expression:', event.cron);
+
+    try {
+      // 记录 Cron 执行
+      await env.DB.prepare(`
+        INSERT INTO crawl_logs (website_id, status, items_count, started_at, finished_at, error_message)
+        VALUES (0, 'triggered', 0, ?, ?, 'Cron triggered, waiting for external crawler')
+      `).bind(
+        new Date().toISOString(),
+        new Date().toISOString()
+      ).run();
+
+      console.log('✅ Cron trigger logged to database');
+
+      // TODO: 触发外部爬虫（GitHub Actions 或 VPS）
+      // 方案 1：调用 GitHub Actions workflow_dispatch API
+      // 方案 2：调用 VPS webhook
+      // 当前阶段：仅记录日志，实际爬取通过手动运行 crawlers/process.js
+
+    } catch (err) {
+      console.error('❌ Cron execution failed:', err.message);
+    }
   }
 };
 

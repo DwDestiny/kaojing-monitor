@@ -1,0 +1,45 @@
+# 定时爬虫执行器
+# 设计思路：
+# - Cloudflare Workers Cron 有 CPU 时间限制，不适合直接跑重度爬虫
+# - 本 workflow 作为外部爬虫执行器，由 GitHub Actions schedule 定时触发
+# - 也可通过 workflow_dispatch 手动触发，便于调试
+# - 当前阶段：完成爬取；上传 D1 仍为 placeholder（见最后一步 TODO）
+name: Scheduled Crawler
+
+on:
+  schedule:
+    # 每天 UTC 18:07 和 UTC 6:23 运行（对应北京时间 2:07 和 14:23）
+    - cron: '7 18 * * *'
+    - cron: '23 6 * * *'
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          cd crawlers
+          npm install
+
+      - name: Run crawler
+        run: |
+          cd crawlers
+          node process.js
+        env:
+          NODE_ENV: production
+
+      - name: Upload to D1 (placeholder)
+        run: |
+          echo "TODO: Upload crawled data to Cloudflare D1"
+          echo "Options:"
+          echo "1. Use wrangler d1 execute with SQL file"
+          echo "2. Call Workers API endpoint to import data"
+          echo "3. Use D1 HTTP API directly"
