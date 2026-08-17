@@ -1,0 +1,157 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* 基础色彩 - OKLCH */
+  --bg-primary: oklch(98% 0 0);
+  --bg-secondary: oklch(100% 0 0);
+  --text-primary: oklch(25% 0 0);
+  --text-secondary: oklch(55% 0 0);
+  --text-tertiary: oklch(72% 0 0);
+  --divider: oklch(94% 0 0);
+
+  /* 马卡龙活力色 - OKLCH */
+  --accent-mint: oklch(88% 0.08 165);
+  --accent-mint-text: oklch(58% 0.12 165);
+  --accent-peach: oklch(88% 0.08 55);
+  --accent-peach-text: oklch(68% 0.14 55);
+  --accent-pink: oklch(88% 0.1 5);
+  --accent-pink-text: oklch(68% 0.16 5);
+  --accent-lemon: oklch(94% 0.08 95);
+  --accent-lemon-text: oklch(65% 0.12 85);
+  --accent-lavender: oklch(88% 0.08 290);
+  --accent-lavender-text: oklch(58% 0.14 290);
+
+  /* 间距系统 8pt */
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-5: 40px;
+  --space-6: 48px;
+  --space-8: 64px;
+  --space-10: 80px;
+
+  /* 圆角：方形设计 */
+  --radius: 0px;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-bg-primary text-text-primary font-sans;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  a {
+    color: inherit;
+  }
+}
+
+@layer components {
+  /* Stats 左边框色条 */
+  .stat-item {
+    @apply relative bg-bg-secondary px-space-3 py-space-4 transition-transform duration-200 ease-smooth;
+  }
+
+  .stat-item::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .stat-item-mint::before {
+    background: var(--accent-mint);
+  }
+  .stat-item-peach::before {
+    background: var(--accent-peach);
+  }
+  .stat-item-pink::before {
+    background: var(--accent-pink);
+  }
+  .stat-item-lemon::before {
+    background: var(--accent-lemon);
+  }
+
+  .stat-item:hover {
+    transform: translateX(4px);
+  }
+
+  .stat-item:hover::before {
+    width: 6px;
+  }
+
+  /* 公告卡片左边框展开 */
+  .announcement-item {
+    @apply relative px-space-5 py-space-4 transition-colors duration-150;
+  }
+
+  .announcement-item::after {
+    content: "";
+    position: absolute;
+    left: var(--space-5);
+    right: var(--space-5);
+    bottom: 0;
+    height: 1px;
+    background: var(--divider);
+  }
+
+  .announcement-item:last-of-type::after {
+    display: none;
+  }
+
+  .announcement-item::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    background: var(--text-primary);
+    transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .announcement-item:hover {
+    background: var(--bg-primary);
+  }
+
+  .announcement-item:hover::before {
+    width: 3px;
+  }
+
+  @media (max-width: 768px) {
+    .announcement-item {
+      @apply px-space-3 py-space-3;
+    }
+
+    .announcement-item::after {
+      left: var(--space-3);
+      right: var(--space-3);
+    }
+  }
+}
+
+/* 无障碍：减少动效 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
