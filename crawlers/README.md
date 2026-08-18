@@ -8,9 +8,13 @@
 /crawlers
   /core
     engine.js           # 通用爬虫引擎
+    extractor.js        # 字段提取
+    deduplicator.js     # URL/内容去重与 hash
+    validator.js        # 输出前数据验证（validateData）
     utils.js            # 工具函数库
   /config
     sites.json          # 网站配置文件（9个网站）
+  process.js            # 批量处理主流程（含验证报告输出）
   test.js               # 测试脚本
   package.json          # 依赖配置
 ```
