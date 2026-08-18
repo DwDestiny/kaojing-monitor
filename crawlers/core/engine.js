@@ -314,8 +314,11 @@ async function fetchAndParse(url, siteConfig) {
     // 提取 URL
     let itemUrl = '';
     if (urlSelector) {
-      const attr = urlAttr || 'href';
-      itemUrl = extractFromHtml($, $item, urlSelector, attr);
+      // 合并 urlSelector 和 urlAttr 成 extractFromHtml 理解的 @attr 内联语法
+      const effectiveSelector = urlAttr
+        ? (urlSelector && urlSelector.includes('@') ? urlSelector : `${urlSelector || ''}@${urlAttr}`)
+        : urlSelector;
+      itemUrl = extractFromHtml($, $item, effectiveSelector);
       itemUrl = resolveUrl(baseUrl || url, itemUrl);
     }
 

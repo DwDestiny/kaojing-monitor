@@ -67,7 +67,8 @@ CREATE TABLE IF NOT EXISTS source_websites (
 CREATE TABLE IF NOT EXISTS crawl_logs (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   website_id INTEGER NOT NULL,
-  status TEXT NOT NULL CHECK(status IN ('success', 'failed', 'partial')),
+  -- status: success/failed/partial 为爬取结果；triggered 为 Cron 触发记录（Workers scheduled 写入，等待外部爬虫执行）
+  status TEXT NOT NULL CHECK(status IN ('success', 'failed', 'partial', 'triggered')),
   items_count INTEGER DEFAULT 0,
   error_message TEXT,
   started_at TEXT NOT NULL,

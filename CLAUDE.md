@@ -88,8 +88,9 @@
 
 ### ⚠️ 待处理
 - [ ] GitHub Actions workflow 已改为手动触发（备用通道），如需启用需配置 `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` secrets
-- [ ] 后端新参数（`examCategory` / `sortBy` / `sortOrder`）需重新部署 Worker 生效：`cd api && wrangler deploy`
+- [ ] 后端新参数（`examCategory` / `sortBy` / `sortOrder`）及 AI 端点需重新部署 Worker 生效：`cd api && wrangler deploy`
 - [ ] about 页「提交新网站」表单待实现（当前为占位文案）
+- [ ] AI 端点本地/线上联调验证（`/api/ai/classify`、`/api/ai/extract`，Workers AI `@cf/meta/llama-3.2-3b-instruct`）
 
 ---
 
