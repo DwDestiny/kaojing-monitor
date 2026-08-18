@@ -37,31 +37,38 @@ function cleanHtml(html) {
 
 /**
  * 提取招考人数
+ * 策略：提取所有匹配的数字，过滤异常值，返回最大值
  * 匹配模式：
- * - "招聘XX人"
+ * - "招聘XX人" / "招聘人员XX人"
  * - "招考XX名"
  * - "计划招录XX人"
  * - "拟招聘XX名"
  */
 function extractRecruitCount(text) {
   const patterns = [
-    /(?:招聘|招考|招录|拟招|计划招)[\s]*(\d+)[\s]*(?:人|名)/,
-    /共[\s]*(\d+)[\s]*(?:个)?(?:岗位|职位)[\s]*(\d+)[\s]*(?:人|名)/,  // "共10个岗位50人"
-    /总计[\s]*(\d+)[\s]*(?:人|名)/
+    // 允许关键词和数字之间有0-10个非数字字符（如"招聘人员18人"）
+    /(?:招聘|招考|招录|拟招|计划招)[^0-9]{0,10}?(\d+)[\s]*(?:人|名)/g,
+    /共[\s]*(\d+)[\s]*(?:个)?(?:岗位|职位)[\s]*(\d+)[\s]*(?:人|名)/g,
+    /总计[\s]*(\d+)[\s]*(?:人|名)/g
   ];
 
+  const allNumbers = [];
+
   for (const pattern of patterns) {
-    const match = text.match(pattern);
-    if (match) {
-      // 如果匹配到两个数字，取第二个（人数）
+    let match;
+    // 使用 while 循环提取所有匹配
+    while ((match = pattern.exec(text)) !== null) {
+      // 如果匹配到两个数字（如"共10个岗位50人"），取第二个（人数）
       const count = match[2] ? parseInt(match[2]) : parseInt(match[1]);
-      if (count > 0 && count < 100000) {  // 合理性检查
-        return count;
-      }
+      allNumbers.push(count);
     }
   }
 
-  return null;
+  // 过滤掉异常值：<5 或 >50000
+  const validNumbers = allNumbers.filter(n => n >= 5 && n <= 50000);
+
+  // 返回最大值，如果没有有效数字返回 null
+  return validNumbers.length > 0 ? Math.max(...validNumbers) : null;
 }
 
 /**
@@ -125,28 +132,24 @@ function extractExamTime(text) {
 
 /**
  * 提取考试科目
+ * 直接从文本中提取原始科目名称，不做标准化归类
+ * 匹配模式：
+ * - "考试科目：教育学、教育心理学、综合知识"
+ * - "笔试科目为行测及申论"
  */
 function extractExamSubjects(text) {
-  const subjects = [];
-  const subjectKeywords = {
-    '行测': ['行政职业能力测验', '行政能力测试', '行测'],
-    '申论': ['申论'],
-    '公共基础知识': ['公共基础知识', '公基', '综合基础知识'],
-    '综合应用能力': ['综合应用能力'],
-    '专业知识': ['专业知识', '专业科目'],
-    '教育综合': ['教育综合知识', '教育学', '教育心理学'],
-    '医学基础': ['医学基础知识', '医学综合'],
-    '面试': ['面试', '结构化面试']
-  };
+  const pattern = /(?:考试科目|笔试科目|考查科目)[：:为是]?\s*([^\n。；;]+)/;
+  const match = text.match(pattern);
 
-  for (const [subject, keywords] of Object.entries(subjectKeywords)) {
-    for (const keyword of keywords) {
-      if (text.includes(keyword) && !subjects.includes(subject)) {
-        subjects.push(subject);
-        break;
-      }
-    }
-  }
+  if (!match) return [];
+
+  const subjectsText = match[1];
+
+  // 按顿号和「及」分割
+  const subjects = subjectsText
+    .split(/[、及]/)
+    .map(s => s.replace(/[《》\"\"\'\']/g, '').trim())
+    .filter(s => s.length > 0);
 
   return subjects;
 }

@@ -80,11 +80,13 @@ export function extractFromHtml($, $element, selector) {
 }
 
 /**
- * 随机延迟 1-2 秒（合规爬取）
+ * 生成随机延迟毫秒数
+ * @param {number} min - 最小毫秒数（默认 1000）
+ * @param {number} max - 最大毫秒数（默认 2000）
+ * @returns {number} 随机延迟毫秒数
  */
-export async function randomDelay() {
-  const delay = 1000 + Math.random() * 1000; // 1000-2000ms
-  await sleep(delay);
+export function randomDelay(min = 1000, max = 2000) {
+  return Math.floor(min + Math.random() * (max - min));
 }
 
 /**

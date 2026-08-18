@@ -35,8 +35,14 @@ export async function fetchAllDetails(announcements) {
         'article',
         '.main-content',
         '#content',
+        '#zoom',
         '.TRS_Editor',
         '.Article',
+        '#article-body',
+        '.article_content',
+        '#articleContent',
+        '.news-content',
+        '.view',
       ];
 
       let content = '';
