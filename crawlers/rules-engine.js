@@ -222,14 +222,16 @@ function autoFix(item) {
   const PARTTIME_RE = /岗位人员|人员，可以|岗位，可以|岗位可以|岗位可|可以采取简化程序|可采取简化程序|部分|个别|其中/;
   let examNote = item.examNote;
   if (examNote === '免笔试') {
-    // 否决：①原文存在笔试环节字样（说明有笔试）；②部分岗位语境（"XX岗位人员可以采取"，非整条免笔试）
+    // 否决：①原文存在笔试环节字样（说明有笔试）；②部分岗位语境（"XX岗位人员可以采取"，非整条免笔试）；
+    // ③原文无任何免笔试依据（无"直接面试/免笔试/业务考核"等强信号）→ 考试方式未知，不得标免笔试（防 LLM 凭标题臆测）
     const hasExam = /笔试内容|笔试时间|笔试科目|笔试地点|笔试成绩|笔试工作|笔试安排|笔试(?:于|定于)|笔试环节/.test(text);
+    const noExamEvidence = /直接业务考核|简化程序直接面试|考试采取[^。]{0,20}面试|全部(?:采取|进行)[^。]{0,15}面试|免笔试|不设笔试|无需笔试|不组织笔试|不进行笔试|无笔试(?!要求)/.test(text);
     const sig = text.match(/(简化程序直接面试|直接业务考核|免笔试|不设笔试|无笔试)/);
     const ctx = sig ? text.slice(Math.max(0, sig.index - 50), sig.index + 50) : text.slice(0, 120);
     const isWholeSet = WHOLESET_RE.test(item.title || '') || WHOLESET_RE.test(ctx);
     const partTime = !isWholeSet && PARTTIME_RE.test(ctx);
-    if (hasExam || partTime) {
-      changes.push(`examNote: 免笔试→null(${hasExam ? '原文有笔试环节' : '仅部分岗位免笔试'})`);
+    if (hasExam || partTime || !noExamEvidence) {
+      changes.push(`examNote: 免笔试→null(${hasExam ? '原文有笔试环节' : partTime ? '仅部分岗位免笔试' : '原文无免笔试依据(考试方式未知)'})`);
       examNote = null;
     }
   } else {
