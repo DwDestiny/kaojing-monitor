@@ -14,6 +14,32 @@ import { validateData } from './core/validator.js';
 import { readFileSync, writeFileSync, appendFileSync, mkdirSync } from 'fs';
 
 const WORKER_AI_BASE = 'https://kaojing-api.dangwei121105.workers.dev/api/ai';
+const WORKER_API_BASE = 'https://kaojing-api.dangwei121105.workers.dev';
+
+// 模块级缓存：线上已存在的公告 URL 集合（增量过滤用，一次运行只拉一次）
+let existingUrlSet = null;
+
+/**
+ * 拉取线上已存在的公告 URL（分页，用于增量过滤跳过存量，省 AI 额度）
+ * @returns {Promise<Set<string>>}
+ */
+async function fetchExistingUrls() {
+  const urls = new Set();
+  let page = 1;
+  while (true) {
+    const resp = await fetch(`${WORKER_API_BASE}/api/announcements?page=${page}&pageSize=100`);
+    if (!resp.ok) break;
+    const data = await resp.json();
+    const items = data.data || [];
+    if (items.length === 0) break;
+    for (const it of items) {
+      if (it.url) urls.add(it.url);
+    }
+    if (items.length < 100) break;
+    page++;
+  }
+  return urls;
+}
 
 // AI 端点鉴权 token（对应 api/wrangler.toml 的 AI_API_TOKEN）
 // 本地开发：通过环境变量 AI_API_TOKEN 传入；未配置时尝试读 .env.local
@@ -274,6 +300,16 @@ export async function processData(siteConfig, options = {}) {
     return pubDate && pubDate >= cutoffDate;
   });
   console.log(`  ✓ 已过滤: ${beforeFilter} → ${recentAnnouncements.length} 条（移除 ${beforeFilter - recentAnnouncements.length} 条旧公告）`);
+
+  // 3.5 增量过滤：跳过线上已存在的公告（避免对存量数据重复调 AI，节省 Workers AI 额度）
+  console.log('  [3.6/6] 增量过滤（跳过线上已有公告）...');
+  if (existingUrlSet === null) {
+    existingUrlSet = await fetchExistingUrls();
+    console.log(`  ✓ 线上已有 ${existingUrlSet.size} 条公告 URL`);
+  }
+  const beforeIncremental = recentAnnouncements.length;
+  recentAnnouncements = recentAnnouncements.filter(a => !existingUrlSet.has(a.url));
+  console.log(`  ✓ 增量过滤: ${beforeIncremental} → ${recentAnnouncements.length} 条（跳过 ${beforeIncremental - recentAnnouncements.length} 条线上已有）`);
 
   // 4. AI 优先字段提取（失败则规则兜底）
   console.log('  [4/6] 提取字段...');

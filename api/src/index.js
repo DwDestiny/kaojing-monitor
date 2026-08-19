@@ -63,6 +63,9 @@ export default {
           response = await classifyContent(request, env);
         } else if (url.pathname === '/api/ai/extract' && request.method === 'POST') {
           response = await extractFields(request, env);
+        } else if (url.pathname === '/api/import' && request.method === 'POST') {
+          // 数据导入端点：GitHub Actions 定时爬虫完成后自动调此端点写库（D1 binding 直连，无需 wrangler 凭证）
+          response = await importAnnouncements(request, env);
         } else {
           response = jsonResponse({ error: 'Not found' }, 404);
         }
@@ -645,4 +648,109 @@ ${truncatedHtml}`
     console.error('extractFields error:', error);
     return jsonResponse({ error: error.message || 'AI extraction failed' }, 500);
   }
+}
+
+
+/**
+ * POST /api/import
+ * 数据导入端点（自动写库，D1 binding 直连）
+ * 由 GitHub Actions 定时爬虫 / 本地脚本调用：爬取→提取→规则清洗后，把 items POST 到此端点，
+ * Worker 内部通过 D1 binding 直接写入 announcements 表，INSERT OR IGNORE + url_hash 去重。
+ * 无需 wrangler 凭证（凭证由 Worker 部署时注入，见 wrangler.toml [[d1_databases]]）。
+ * 鉴权：与 AI 端点相同，必须携带 Bearer token（env.AI_API_TOKEN）。
+ * body: { items: [{ title, url, urlHash, contentHash, source, region, recruitCount,
+ *                   examDate, examTime, examSubjects[], examType, examLocation,
+ *                   registrationDeadline, salaryRange, publishDate, crawledAt, rawHtml,
+ *                   complianceLevel? }] }
+ */
+async function importAnnouncements(request, env) {
+  // 鉴权（与 /api/ai/extract 一致）
+  const auth = request.headers.get('Authorization') || '';
+  if (auth !== `Bearer ${env.AI_API_TOKEN}`) return jsonResponse({ error: 'Unauthorized' }, 401);
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON body' }, 400);
+  }
+
+  const items = body.items;
+  if (!Array.isArray(items) || items.length === 0) {
+    return jsonResponse({ error: 'Missing required field: items (non-empty array)' }, 400);
+  }
+  if (items.length > 500) {
+    return jsonResponse({ error: 'items too large, max 500 per request' }, 400);
+  }
+
+  // 字段映射：camelCase → snake_case（与 database/schema-d1.sql 列一致）
+  const statements = [];
+  let valid = 0;
+  const skipped = [];
+
+  for (const item of items) {
+    if (!item.title || !item.url) {
+      skipped.push({ reason: 'missing title/url', title: item.title || '(空)' });
+      continue;
+    }
+    valid++;
+
+    // raw_html：受限源（compliance_level=restricted）只存 2000 字符 snippet，普通源截断 100KB
+    const rawHtml = (item.rawHtml || '').slice(0, item.complianceLevel === 'restricted' ? 2000 : 100000);
+    const crawledAt = item.crawledAt || item.crawled_at || new Date().toISOString();
+    const subjects = Array.isArray(item.examSubjects)
+      ? item.examSubjects.join(',')
+      : (typeof item.examSubjects === 'string' ? item.examSubjects : null);
+
+    const stmt = env.DB.prepare(`
+      INSERT OR IGNORE INTO announcements
+        (title, url, url_hash, content_hash, source_website_id, source, region,
+         recruit_count, exam_date, exam_time, exam_subjects, exam_type, exam_category,
+         exam_location, registration_deadline, salary_range, publish_date,
+         crawled_at, extracted_at, status, raw_html)
+      VALUES (?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, 'active', ?)
+    `).bind(
+      item.title,
+      item.url,
+      item.urlHash || item.url,
+      item.contentHash || null,
+      item.source || 'unknown',
+      item.region || '未知',
+      item.recruitCount || null,
+      item.examDate || null,
+      item.examTime || null,
+      subjects,
+      item.examType || null,
+      item.examLocation || null,
+      item.registrationDeadline || null,
+      item.salaryRange || null,
+      item.publishDate || null,
+      crawledAt,
+      new Date().toISOString(),
+      rawHtml
+    );
+    statements.push(stmt);
+  }
+
+  if (statements.length === 0) {
+    return jsonResponse({ imported: 0, skipped, total: 0 }, 200);
+  }
+
+  // 分批执行（D1 batch 单批上限 100 条，此处按 50 分批，避免超限）
+  let imported = 0;
+  for (let i = 0; i < statements.length; i += 50) {
+    const batch = statements.slice(i, i + 50);
+    const results = await env.DB.batch(batch);
+    for (const r of results) {
+      // meta.changes > 0 表示真正插入（INSERT OR IGNORE 命中重复时 changes=0）
+      imported += (r.meta && r.meta.changes) || 0;
+    }
+  }
+
+  return jsonResponse({
+    imported,
+    skipped,
+    total: valid,
+    message: `导入完成：新增 ${imported} 条，重复跳过 ${valid - imported} 条`
+  });
 }

@@ -169,7 +169,19 @@ function autoFix(item) {
   return changes;
 }
 
-// ── 主流程 ──
+// 导出供 upload-to-d1.js 复用（被 import 时不执行下方 CLI 主流程）
+export { autoFix, normalizeText };
+
+// ── 主流程（仅直接运行时执行：node rules-engine.js <input> <output>）──
+const isCli = process.argv[1] && process.argv[1].endsWith('rules-engine.js');
+if (!isCli) {
+  // 被 import 时静默跳过主流程（不能 process.exit，会杀掉调用方进程）
+  main = undefined;
+} else {
+  main();
+}
+
+function main() {
 const inputPath = process.argv[2] || './output/re-extracted-ollama.json';
 const outputPath = process.argv[3] || './output/cleaned-data.json';
 
@@ -199,3 +211,4 @@ for (const c of changeLog.slice(0, 20)) {
 }
 console.log(`\n已保存: ${outputPath}`);
 console.log('审计建议：修正后字段全部符合规则，无需人工。');
+}
