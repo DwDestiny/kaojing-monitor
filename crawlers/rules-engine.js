@@ -45,19 +45,14 @@ function daysBetween(a, b) {
  */
 function extractDeadlineRange(text, yearGuess) {
   // "报名时间：2026年X月X日[时间]至Y月Z日" / "报名X至Y" / "报名X—Y"
-  const m = text.match(/报名[^。]{0,60}?(\d{4})[年\-/](\d{1,2})[月\-/](\d{1,2})[日号][^。至\-—]{0,20}?(?:至|\-|—)\s*(?:\d{4}[年\-/])?(\d{1,2})[月\-/](\d{1,2})[日号]/);
+  // 第二日期年份为可选捕获组 m[4]（可能 undefined → 沿用第一日期年份；跨年 +1）
+  const m = text.match(/报名[^。]{0,60}?(\d{4})[年\-/](\d{1,2})[月\-/](\d{1,2})[日号][^。至\-—]{0,20}?(?:至|\-|—)\s*(?:(\d{4})[年\-/])?(\d{1,2})[月\-/](\d{1,2})[日号]/);
   if (m) {
-    const y1 = m[1], y2 = m[4] ? String(2026 + (parseInt(m[4]) - 2026)) : m[1];
-    // 第二个日期的年份：若显式给出用显式，否则沿用第一个日期年份（跨年场景 +1）
-    let y2f = m[1];
-    if (m[4]) {
-      y2f = String(m[4]);
-    } else if (parseInt(m[5]) < parseInt(m[2])) {
-      y2f = String(parseInt(m[1]) + 1);
-    }
+    let y2 = m[4] || m[1];
+    if (!m[4] && parseInt(m[5]) < parseInt(m[2])) y2 = String(parseInt(m[1]) + 1);
     return [
       `${m[1]}-${String(m[2]).padStart(2, '0')}-${String(m[3]).padStart(2, '0')}`,
-      `${y2f}-${String(m[5]).padStart(2, '0')}-${String(m[6]).padStart(2, '0')}`,
+      `${y2}-${String(m[5]).padStart(2, '0')}-${String(m[6]).padStart(2, '0')}`,
     ];
   }
   // 模式2："报名截止/报名结束 ... 日期"
@@ -151,11 +146,16 @@ function autoFix(item) {
       changes.push(`deadline: ${deadline}→null(偏离发布日${gap ?? '?'}天，超窗口)`);
       deadline = null;
     } else {
-      // 区间校验：原文"报名X至Y"时，LLM 值必须在区间内
-      const range = extractDeadlineRange(text, yearGuess);
-      if (range && (deadline < range[0] || deadline > range[1])) {
-        changes.push(`deadline: ${deadline}→null(不在报名区间 ${range[0]}~${range[1]})`);
-        deadline = null;
+      // 长期招聘豁免：原文"长期报名/报名有效期至X/招满为止"时，deadline 取长期有效值，
+      // 不按"首批报名区间"校验（如广东建设职院：报名有效期至11月30日，首批报名至9月30日 → 取11-30）
+      const longTerm = /长期报名|报名有效期至|长期有效|招满为止|招满即止|随时报名|长期招聘/.test(text);
+      if (!longTerm) {
+        // 区间校验：原文"报名X至Y"时，LLM 值必须在区间内；不在区间 → 回填区间截止日（原文明确证据，优于置 null）
+        const range = extractDeadlineRange(text, yearGuess);
+        if (range && (deadline < range[0] || deadline > range[1])) {
+          changes.push(`deadline: ${deadline}→${range[1]}(回填报名区间截止日)`);
+          deadline = range[1];
+        }
       }
     }
   }
@@ -215,23 +215,34 @@ function autoFix(item) {
     item.examSubjects = [];
   }
 
-  // ── 规则7: examNote 免笔试（否决 + 补标）──
+  // ── 规则7: examNote 免笔试（否决 + 补标，按"整条 vs 部分岗位"精细化）──
+  // 整条免笔试招聘（招聘对象全部为博士/高级/高层次，标题或正文命中）
+  const WHOLESET_RE = /面向(?:博士|高级|高层次|博士研究生|具有博士|高级和博士)|公开招聘(?:博士|高级|高层次)/;
+  // 部分岗位免笔试语境
+  const PARTTIME_RE = /岗位人员|人员，可以|岗位，可以|岗位可以|岗位可|可以采取简化程序|可采取简化程序|部分|个别|其中/;
   let examNote = item.examNote;
   if (examNote === '免笔试') {
-    // 否决：①原文存在笔试环节字样（说明有笔试）；②"可以/可采取简化程序""岗位人员"等部分岗位语境
+    // 否决：①原文存在笔试环节字样（说明有笔试）；②部分岗位语境（"XX岗位人员可以采取"，非整条免笔试）
     const hasExam = /笔试内容|笔试时间|笔试科目|笔试地点|笔试成绩|笔试工作|笔试安排|笔试(?:于|定于)|笔试环节/.test(text);
-    const partTime = /可以(?:采取)?简化程序|可采取|部分岗位|个别岗位|岗位人员|人员，可以|专业技术岗位人员/.test(text);
+    const sig = text.match(/(简化程序直接面试|直接业务考核|免笔试|不设笔试|无笔试)/);
+    const ctx = sig ? text.slice(Math.max(0, sig.index - 50), sig.index + 50) : text.slice(0, 120);
+    const isWholeSet = WHOLESET_RE.test(item.title || '') || WHOLESET_RE.test(ctx);
+    const partTime = !isWholeSet && PARTTIME_RE.test(ctx);
     if (hasExam || partTime) {
       changes.push(`examNote: 免笔试→null(${hasExam ? '原文有笔试环节' : '仅部分岗位免笔试'})`);
       examNote = null;
     }
   } else {
-    // 补标：规则强信号（LLM 漏标时补）
-    const noExam = text.match(/(直接业务考核|简化程序直接面试[^。]{0,30}(?:面试成绩|总成绩)|免笔试|不设笔试|无需笔试|不组织笔试|不进行笔试|无笔试(?!要求))/);
+    // 补标：规则强信号（LLM 漏标时补）；WHOLESET 优先（整条免笔试招聘），其余含"岗位"语境视为部分岗位
+    const noExam = text.match(/(直接业务考核|(?:考试采取|全部|均)?简化程序直接面试[^。]{0,30}(?:面试|总成绩)|免笔试|不设笔试|无需笔试|不组织笔试|不进行笔试|无笔试(?!要求))/);
     if (noExam && !item.examDate) {
-      const ctx = text.slice(Math.max(0, noExam.index - 40), noExam.index + 40);
-      const partTime = /部分|个别|其中|可以|可根据|岗位/.test(ctx);
-      if (!partTime && !/(笔试时间|笔试日期|笔试定于|笔试于|笔试安排|笔试另行|笔试内容)/.test(ctx)) {
+      const ctx = text.slice(Math.max(0, noExam.index - 50), noExam.index + 50);
+      // 整条免笔试：标题含博士/高级，或原文"面向博士…招聘采取"（且非"可采取"——"可采取"=部分岗位）
+      const isWholeSet = WHOLESET_RE.test(item.title || '') ||
+        (WHOLESET_RE.test(ctx) && !/可采取|可以采取|可简化程序|可组织/.test(ctx));
+      const partTime = !isWholeSet && /岗位|部分|个别|其中|可以|可根据/.test(ctx);
+      // 原文出现任何"笔试"字样 → 说明公告含笔试环节 → 不补标
+      if (!partTime && !/笔试/.test(ctx) && !/(笔试时间|笔试日期|笔试定于|笔试于|笔试安排|笔试另行|笔试内容)/.test(text)) {
         changes.push('examNote: 补标免笔试(规则强信号)');
         examNote = '免笔试';
       }
