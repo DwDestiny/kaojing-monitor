@@ -193,20 +193,36 @@ function classifyExamType(title, text) {
 
 /**
  * 提取报名截止时间
+ * 优先匹配"报名时间：X年X月X日 至 X月X日"的第二个日期（截止日）
  */
 function extractRegistrationDeadline(text) {
   const patterns = [
+    // 0. 报名时间段：X年X月X日...至...X月X日（取"至"后的日期，即截止日）
+    /报名[^。]{0,80}?至\s*(?:(\d{4})[年\-/])?(\d{1,2})[月\-/](\d{1,2})[日号]/,
+    // 1. 报名时间段：报名时间X月X日-X月X日（取第二个日期）
+    /报名[^。]{0,50}?(\d{1,2})[月\-/](\d{1,2})[日号]?\s*[-~—至]\s*(?:(\d{4})[年\-/])?(\d{1,2})[月\-/](\d{1,2})[日号]/,
+    // 2. 明确截止表述
     /(?:报名截止|报名结束)[时间日期为至]?\s*[：:]?\s*(\d{4})[年\-/](\d{1,2})[月\-/](\d{1,2})[日号]/,
-    /报名申请[^0-9]{0,20}?(\d{4})[年\-/](\d{1,2})[月\-/](\d{1,2})[日号]/,
+    // 3. X年X月X日前（截止报名）
     /(\d{4})[年\-/](\d{1,2})[月\-/](\d{1,2})[日号]?\s*(?:前|之前|截止)(?:报名)?/
   ];
 
   for (const pattern of patterns) {
     const match = text.match(pattern);
-    if (match) {
-      const [, year, month, day] = match;
-      return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    if (!match) continue;
+
+    // 模式 0/1 返回"至"后的日期（match[1-3] 或 match[3-5]）
+    if (pattern === patterns[0]) {
+      const year = match[1] || new Date().getFullYear();
+      return `${year}-${String(match[2]).padStart(2, '0')}-${String(match[3]).padStart(2, '0')}`;
     }
+    if (pattern === patterns[1]) {
+      const year = match[3] || new Date().getFullYear();
+      return `${year}-${String(match[4]).padStart(2, '0')}-${String(match[5]).padStart(2, '0')}`;
+    }
+    // 模式 2/3 返回 match[1-3]
+    const [, year, month, day] = match;
+    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   }
 
   return null;
