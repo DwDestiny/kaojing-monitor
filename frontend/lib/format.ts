@@ -30,7 +30,7 @@ export function formatSubjects(subjects: string[] | null | undefined): string {
   const cleaned = subjects
     .map((s) => {
       const cut = s.search(/(满分|分为|两科|一科$|成绩|最低合格|题型|无指定|内容为|笔试)/);
-      let t = cut >= 0 ? s.slice(0, cut) : s;
+      const t = cut >= 0 ? s.slice(0, cut) : s;
       return t.replace(/[，。、;；：:]+$/, "").trim();
     })
     .filter(Boolean);

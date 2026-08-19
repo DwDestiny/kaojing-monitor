@@ -62,11 +62,73 @@ function ruleDeadline(text, publishDate) {
   return null;
 }
 
-/** 从原文提取笔试日期 */
+/** 从原文提取笔试日期（强化版：支持"笔试时间/笔试日期/定于/笔试于/笔试X月X日/X月X日笔试"等） */
 function ruleExamDate(text) {
-  const m = text.match(/(?:笔试|考试)(?:时间|日期)?[：:为是]?\s*(\d{4})[年\-/](\d{1,2})[月\-/](\d{1,2})[日号]/);
-  if (m) return `${m[1]}-${String(m[2]).padStart(2, '0')}-${String(m[3]).padStart(2, '0')}`;
+  // 模式1: 笔试时间/笔试日期：2026年X月X日 / 笔试时间为X / 笔试定于X
+  const m1 = text.match(/(?:笔试|考试)(?:时间|日期)?[：:为是]?\s*(?:定于|于|为)?\s*(\d{4})[年\-/](\d{1,2})[月\-/](\d{1,2})[日号]/);
+  if (m1) return `${m1[1]}-${String(m1[2]).padStart(2, '0')}-${String(m1[3]).padStart(2, '0')}`;
+  // 模式2: 定于X年X月X日（组织/举行）笔试
+  const m2 = text.match(/(?:定于|拟定于|拟于|将于)\s*(\d{4})[年\-/](\d{1,2})[月\-/](\d{1,2})[日号][^。]{0,15}(?:笔试|考试)/);
+  if (m2) return `${m2[1]}-${String(m2[2]).padStart(2, '0')}-${String(m2[3]).padStart(2, '0')}`;
+  // 模式3: X年X月X日（组织/举行/进行）笔试 / X年X月X日笔试
+  const m3 = text.match(/(\d{4})[年\-/](\d{1,2})[月\-/](\d{1,2})[日号][^。]{0,12}?(?:组织|举行|进行)?(?:笔试|考试)/);
+  if (m3) return `${m3[1]}-${String(m3[2]).padStart(2, '0')}-${String(m3[3]).padStart(2, '0')}`;
   return null;
+}
+
+/** 科目标准化映射（基于辅导员考情大表 + 全国事业单位考试常见科目枚举） */
+const SUBJECT_ALIASES = [
+  [/公共基础(?:知识)?|公基(?!础)/, '公共基础知识'],
+  [/行政职业能力测验|职业能力倾向测验|职业能力测试|行政能力测试|行政能力测验|职测|行测/, '职业能力倾向测验'],
+  [/综合应用能力(?:测试|测验)?/, '综合应用能力'],
+  [/综合(?:基础)?知识(?:测试|测验)?/, '综合知识'],
+  [/申论/, '申论'],
+  [/教育(?:综合)?基础(?:知识)?|高等教育基础(?:知识)?/, '教育基础知识'],
+  [/高等教育教学基础(?:知识)?/, '教育教学基础知识'],
+  [/高等教育心理学|教育心理学/, '教育心理学'],
+  [/医学基础(?:知识)?|医学综合(?:知识)?/, '医学基础知识'],
+  [/卫生专业(?:知识)?/, '卫生专业知识'],
+  [/护理(?:学|知识)?/, '护理学'],
+  [/临床医学/, '临床医学'],
+  [/专业基础(?:知识)?|岗位专业(?:相关)?知识|专业知识/, '专业知识'],
+  [/写作/, '写作'],
+  [/时事政治/, '时事政治'],
+  [/法律法规/, '法律法规'],
+];
+
+/** 标准化科目名：别名 → 标准枚举；未命中返回净化后的原值 */
+function normalizeSubject(name) {
+  const t = name.trim();
+  for (const [re, std] of SUBJECT_ALIASES) {
+    if (re.test(t)) return std;
+  }
+  return t;
+}
+
+/** 科目特征词：净化后不含任一特征词 → 判定非科目，丢弃（清掉"全程封闭考试""本次招募"等误提取） */
+const SUBJECT_FEATURE_RE = /(基础|测验|知识|能力|申论|写作|专业|教育|医学|护理|法律|时政|政治|理论|心理|道德|职业|技能|素质|常识|判断|言语|数量|资料|推理|管理|技术|计算机|综合)/;
+
+/**
+ * 从原文规则提取科目（兜底 AI 漏提）
+ * 支持："笔试主要内容为公共基础知识" / "考试科目：综合知识" / "笔试内容为X和Y"
+ * 提取 → 切分 → 净化 → 标准化 → 特征词过滤
+ */
+function ruleExtractSubjects(text) {
+  const m = text.match(/(?:笔试|考试)(?:主要内容|内容|科目)?[：:为是]\s*([^。；]{2,90})/);
+  if (!m) return [];
+  const raw = m[1];
+  // 切分：顿号/逗号/和/与/以及
+  const parts = raw.split(/[、,，;；]|\s*(?:和|与|以及)\s*/).map(x => x.trim()).filter(Boolean);
+  const subjects = [];
+  for (const p of parts) {
+    const cleaned = cleanSubject(p);
+    if (!cleaned) continue;
+    // 特征词过滤：非科目描述（考场纪律/招募说明/占比说明）丢弃
+    if (!SUBJECT_FEATURE_RE.test(cleaned)) continue;
+    const norm = normalizeSubject(cleaned);
+    if (!subjects.includes(norm)) subjects.push(norm);
+  }
+  return subjects.slice(0, 10);
 }
 
 function daysBetween(a, b) {
@@ -150,24 +212,37 @@ function autoFix(item) {
     }
   }
 
-  // ── 规则5: examSubjects（增强：剥离描述性文字，保留纯科目名）──
-  if (item.examSubjects) {
-    if (!Array.isArray(item.examSubjects)) {
-      changes.push(`examSubjects: 非数组→清空`);
-      item.examSubjects = [];
+  // ── 规则5: examSubjects（规则提取优先 + AI 兜底；净化描述 + 标准化）──
+  {
+    // 1) 规则提取优先：从原文抓"笔试内容为公共基础知识"等，覆盖 AI 漏提（用户反馈"明明写了公共基础却显示待定"）
+    const ruleSubjects = ruleExtractSubjects(text);
+    let finalSubjects;
+    if (ruleSubjects.length > 0) {
+      finalSubjects = ruleSubjects;
+      if (JSON.stringify(finalSubjects) !== JSON.stringify(item.examSubjects)) {
+        changes.push(`examSubjects: ${JSON.stringify(item.examSubjects || [])}→${JSON.stringify(finalSubjects)}(规则提取+标准化)`);
+      }
+    } else if (item.examSubjects) {
+      // 2) AI 值兜底：拆平 + 净化 + 标准化
+      if (!Array.isArray(item.examSubjects)) {
+        changes.push(`examSubjects: 非数组→清空`);
+        finalSubjects = [];
+      } else {
+        const flat = [];
+        for (const s of item.examSubjects) {
+          flat.push(...String(s).split(/[,，、;；]/).map(x => x.trim()).filter(Boolean));
+        }
+        const cleaned = flat.map(cleanSubject).filter(s => s.length >= 2 && s.length <= 30);
+        const normalized = cleaned.map(normalizeSubject);
+        finalSubjects = [...new Set(normalized)];
+        if (JSON.stringify(finalSubjects) !== JSON.stringify(item.examSubjects)) {
+          changes.push(`examSubjects: ${item.examSubjects.length}项→${finalSubjects.length}项(净化+标准化)`);
+        }
+      }
     } else {
-      // 拆平（AI 可能把"综合应用能力两科，满分均为150分"塞进一个元素）→ 每项净化 → 去重
-      const flat = [];
-      for (const s of item.examSubjects) {
-        flat.push(...String(s).split(/[,，、;；]/).map(x => x.trim()).filter(Boolean));
-      }
-      const cleaned = flat.map(cleanSubject).filter(s => s.length >= 2 && s.length <= 30);
-      const unique = [...new Set(cleaned)];
-      if (JSON.stringify(unique) !== JSON.stringify(item.examSubjects)) {
-        changes.push(`examSubjects: ${item.examSubjects.length}项→${unique.length}项(净化描述)`);
-      }
-      item.examSubjects = unique.slice(0, 20);
+      finalSubjects = [];
     }
+    item.examSubjects = finalSubjects.slice(0, 20);
   }
 
   // ── 规则7: 笔试状态 examNote ──
@@ -223,12 +298,14 @@ function cleanSubject(raw) {
   t = t.replace(/^(?:考试)?内容包括?[：:]?\s*/, '');
   t = t.replace(/^(?:考试)?内容(?:主要)?为[：:]?\s*/, '');
   t = t.replace(/^考试内容[：:]\s*/, '');
-  // 截断描述后缀（满分/分为/两科/一科/成绩/题型/教材等）——cut>=0 时截断（含位置0→空串丢弃）
-  const cut = t.search(/(满分|分为|两科|一科$|各[科门]|采取|笔试成绩|总分为|成绩|最低合格|题型|无指定|参考教材|主要包括|等基础性|内容为|内容包括|笔试时间|笔试后|笔试情况|笔试分|笔试)/);
+  // 截断描述后缀（满分/分为/两科/一科/成绩/题型/教材/考试形式等）——cut>=0 时截断（含位置0→空串丢弃）
+  const cut = t.search(/(满分|分为|两科|一科$|各[科门]|采取|笔试成绩|总分为|成绩|最低合格|题型|无指定|参考教材|主要包括|等基础性|内容为|内容包括|笔试时间|笔试后|笔试情况|笔试分|笔试|考试|部分|方式|形式|试题|突出考察|主要考察|考察考生|测查)/);
   if (cut >= 0) t = t.slice(0, cut);
-  // 去残留标点/说明
+  // 去残留标点/说明/书名号
+  t = t.replace(/[《》]/g, '');
   t = t.replace(/[，,]\s*笔试\s*$/, '');   // "相关岗位专业知识， 笔试" → "相关岗位专业知识"
   t = t.replace(/[，。、;；：:\s]+$/g, '').trim();
+  t = t.replace(/等\s*$/, '');            // 尾缀"等"（"相关岗位基础知识等" → "相关岗位基础知识"）
   t = t.replace(/\s+/g, '');              // 去内部空格（"岗位 专业相关知识" → "岗位专业相关知识"）
   // 通用词/过短 → 丢弃
   if (SUBJECT_STOPWORDS.has(t) || t.length < 2) return '';
