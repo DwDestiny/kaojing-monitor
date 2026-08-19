@@ -73,7 +73,8 @@ function generateAnnouncementsSql(data) {
 function main() {
   console.log('读取处理后的数据...');
 
-  const inputPath = './output/processed-data.json';
+  // 支持通过环境变量指定输入文件（默认 processed-data.json；Ollama 重提取结果用 re-extracted-ollama.json）
+  const inputPath = process.env.INPUT_JSON || './output/processed-data.json';
   const data = JSON.parse(readFileSync(inputPath, 'utf-8'));
 
   console.log(`数据条数: ${data.length}`);

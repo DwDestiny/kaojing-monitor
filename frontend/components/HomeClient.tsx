@@ -108,7 +108,6 @@ export default function HomeClient() {
           const listElement = document.getElementById('announcements');
           if (listElement) {
             const offset = 80; // 顶部导航栏高度
-            const elementTop = listElement.getBoundingClientRect().top;
             const scrollTop = window.scrollY || window.pageYOffset;
             
             // 只在当前位置高于列表时才滚动
