@@ -36,6 +36,8 @@ jobs:
           node process.js
         env:
           NODE_ENV: production
+          # Ollama Cloud 云端提取（GitHub Actions runner 可直接访问，无需本地 Ollama）
+          OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
 
       # 自动上传：规则引擎清洗 → POST Worker /api/import（D1 binding 直连写库，INSERT OR IGNORE 去重）
       - name: Upload to D1 via Worker API

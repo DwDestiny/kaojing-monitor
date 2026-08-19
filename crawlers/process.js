@@ -46,6 +46,77 @@ async function fetchExistingUrls() {
 // ⚠️ 不要把真实 token 硬编码提交到 git（token 已写入 api/wrangler.toml，注意仓库可见性）
 const AI_TOKEN = process.env.AI_API_TOKEN || '';
 
+// ── Ollama Cloud 云端直连提取（deepseek-v4-flash:cloud，LLM 提取为主）──
+const OLLAMA_BASE = 'https://ollama.com';
+const OLLAMA_MODEL = 'deepseek-v4-flash:cloud';
+const OLLAMA_KEY = process.env.OLLAMA_API_KEY || '';
+
+const EXTRACT_SYSTEM_PROMPT = `你是招考公告信息提取专家。从公告中提取结构化信息，严格遵守以下规则：
+1. registrationDeadline（报名截止日）：取报名时间段的第二个日期。如"报名时间7月1日至7月7日"→ 截止日是7月7日。注意："X月X日之前取得学历学位证书""X月X日前取得毕业证"等是资格条件日期，不是报名截止日，不要提取。
+2. examSubjects（考试科目）：只返回纯科目名称。禁止返回"满分""两科""一科""考试方式""占比"等描述文字。考试分两部分的要分别列出。示例："笔试主要内容：公共基础知识（包括法律法规、时事政治、省情省况等基础性知识）和与岗位相应的专业知识两部分" → ["公共基础知识","专业知识"]
+3. examNote：整条公告明确无笔试（如"直接业务考核""简化程序直接面试，面试成绩即为总成绩""免笔试""不设笔试"）且无笔试日期时填"免笔试"；否则填 null。注意"无笔试要求的博士岗位"这类只是部分岗位免笔试，不填。只要原文出现"笔试内容""笔试时间""笔试科目""笔试地点""笔试成绩"等字样，说明有笔试环节，就不能填"免笔试"。
+4. examDate：笔试日期，无笔试或日期未公布时填 null。
+5. examType：只能从 [事业单位, 公务员, 教师招聘, 三支一扶, 医疗卫生, 国企招聘, 选调生, 其他] 中选。
+6. 无把握的字段返回 null，禁止编造。但如果原文明确写了科目/日期，必须提取出来，不要因为格式不标准而漏掉。
+只输出 JSON，不要输出任何其他文字。`;
+
+const EXTRACT_SCHEMA_HINT = `JSON 格式：
+{
+  "recruitCount": 数字|null,
+  "examDate": "YYYY-MM-DD"|null,
+  "examTime": "HH:MM-HH:MM"|null,
+  "examSubjects": [string],
+  "examType": string|null,
+  "examLocation": string|null,
+  "registrationDeadline": "YYYY-MM-DD"|null,
+  "salaryRange": string|null,
+  "examNote": "免笔试"|null,
+  "confidence": 0-1,
+  "warnings": [string]
+}`;
+
+/**
+ * 调用 Ollama Cloud 云端提取（HTML 剥离后发送；失败抛错由外层规则兜底）
+ */
+async function callOllamaExtract(title, rawHtml, retries = 2) {
+  const cleanHtml = (rawHtml || '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .replace(/(\d)\s+(\d)/g, '$1$2')
+    .slice(0, 8000);
+  let lastError;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const resp = await fetch(`${OLLAMA_BASE}/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${OLLAMA_KEY}` },
+        body: JSON.stringify({
+          model: OLLAMA_MODEL,
+          messages: [
+            { role: 'system', content: EXTRACT_SYSTEM_PROMPT },
+            { role: 'user', content: `标题：${title}\n正文：${cleanHtml}\n\n${EXTRACT_SCHEMA_HINT}` },
+          ],
+          stream: false,
+          options: { temperature: 0 },
+        }),
+      });
+      if (!resp.ok) {
+        const t = await resp.text().catch(() => '');
+        throw new Error(`Ollama extract HTTP ${resp.status}: ${t.slice(0, 200)}`);
+      }
+      const body = await resp.json();
+      const content = body?.message?.content || '';
+      const m = content.match(/\{[\s\S]*\}/);
+      if (!m) throw new Error(`Ollama 未返回 JSON: ${content.slice(0, 100)}`);
+      return JSON.parse(m[0]);
+    } catch (err) {
+      lastError = err;
+      if (attempt < retries) await new Promise(r => setTimeout(r, 1000));
+    }
+  }
+  throw lastError;
+}
+
 /**
  * 调用已部署的 Worker AI 端点（带重试 + Bearer 鉴权）
  * @param {string} endpoint - 'classify' | 'extract'
@@ -211,10 +282,7 @@ async function extractAnnouncements(announcements) {
     let aiFields = {};
     try {
       stats.aiCalls++;
-      const aiResult = await callWorkerAI('extract', {
-        title: item.title,
-        rawHtml: item.rawHtml || '',
-      });
+      const aiResult = await callOllamaExtract(item.title, item.rawHtml || '');
       // 防御：AI 返回非对象（null/字符串等）时降级为空对象
       aiFields = aiResult && typeof aiResult === 'object' ? aiResult : {};
       stats.aiSuccess++;
@@ -224,17 +292,19 @@ async function extractAnnouncements(announcements) {
       console.warn(`  ⚠ AI 提取失败，使用规则兜底: ${title} (${err.message})`);
     }
 
-    // 第三层：合并 —— 规则字段优先，AI 只补规则缺失的字段
+    // 第三层：合并 —— LLM 提取为主（全字段），规则仅在 LLM 缺失时补缺；
+    // 最终校验/否决由 upload-to-d1.js 的 rules-engine 校验层完成
     const finalFields = {
       ...aiFields,
-      recruitCount: ruleFields.recruitCount ?? aiFields.recruitCount,
-      examDate: ruleFields.examDate ?? aiFields.examDate,
-      examTime: ruleFields.examTime ?? aiFields.examTime,
-      examSubjects: ruleFields.examSubjects?.length > 0 ? ruleFields.examSubjects : aiFields.examSubjects,
-      examType: ruleFields.examType != null && ruleFields.examType !== '其他' ? ruleFields.examType : aiFields.examType,
-      registrationDeadline: ruleFields.registrationDeadline ?? aiFields.registrationDeadline,
-      examLocation: ruleFields.examLocation ?? aiFields.examLocation,
-      salaryRange: ruleFields.salaryRange ?? aiFields.salaryRange,
+      recruitCount: aiFields.recruitCount ?? ruleFields.recruitCount,
+      examDate: aiFields.examDate ?? ruleFields.examDate,
+      examTime: aiFields.examTime ?? ruleFields.examTime,
+      examSubjects: aiFields.examSubjects?.length > 0 ? aiFields.examSubjects : (ruleFields.examSubjects || []),
+      examType: aiFields.examType ?? ruleFields.examType,
+      registrationDeadline: aiFields.registrationDeadline ?? ruleFields.registrationDeadline,
+      examLocation: aiFields.examLocation ?? ruleFields.examLocation,
+      salaryRange: aiFields.salaryRange ?? ruleFields.salaryRange,
+      examNote: aiFields.examNote ?? null,
     };
 
     // 第四层：置信度审计 —— 低置信度记日志，供人工抽查
