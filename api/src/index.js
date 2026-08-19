@@ -559,9 +559,10 @@ async function extractFields(request, env) {
       return jsonResponse({ error: 'Missing required fields: title, rawHtml' }, 400);
     }
 
-    // 截断到前 32KB（32768 字节），避免超出模型上下文限制
+    // 截断输入正文：公告核心信息（人数/时间/科目）通常在前 8KB；
+    // 实测 25KB 输入会导致 qwen3.8-27b 推理超时（111s → HTTP 500），8KB 输入 34s 成功。
     const htmlStr = typeof rawHtml === 'string' ? rawHtml : String(rawHtml);
-    const truncatedHtml = truncateToBytes(htmlStr, 32768);
+    const truncatedHtml = truncateToBytes(htmlStr, 8192);
 
     // 系统提示词强化：按 schema 提取，无把握返回 null，禁止编造（消灭幻觉模板科目）
     const messages = [
