@@ -69,6 +69,7 @@ export default function AnnouncementPage() {
     examTime,
     examSubjects,
     examType,
+    examNote,
     publishDate,
     crawledAt,
     source,
@@ -133,7 +134,7 @@ export default function AnnouncementPage() {
           <DetailRow label="招聘人数" value={formatRecruitCount(recruitCount)} />
           <DetailRow
             label="笔试时间"
-            value={formatExamSchedule(examDate, examTime)}
+            value={formatExamSchedule(examDate, examTime, examNote)}
           />
           <DetailRow label="考试科目" value={formatSubjects(examSubjects)} />
           <DetailRow label="考试类型" value={examType ?? "待定"} />

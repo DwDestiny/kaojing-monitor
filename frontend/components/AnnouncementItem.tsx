@@ -22,6 +22,7 @@ export default function AnnouncementItem({
     examTime,
     examSubjects,
     examType,
+    examNote,
     badge,
   } = announcement;
 
@@ -62,7 +63,7 @@ export default function AnnouncementItem({
         <div className="flex items-baseline gap-1.5 text-[14px]">
           <span className="font-normal text-text-tertiary">笔试</span>
           <span className="font-medium text-text-primary">
-            {formatExamSchedule(examDate, examTime)}
+            {formatExamSchedule(examDate, examTime, examNote)}
           </span>
         </div>
         <div className="flex items-baseline gap-1.5 text-[14px]">

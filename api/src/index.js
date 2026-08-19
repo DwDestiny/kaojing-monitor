@@ -220,6 +220,7 @@ async function getAnnouncements(request, env) {
     registrationDeadline: row.registration_deadline,
     salaryRange: row.salary_range,
     publishDate: row.publish_date,
+    examNote: row.exam_note,
     crawledAt: row.crawled_at
   }));
 
@@ -706,9 +707,9 @@ async function importAnnouncements(request, env) {
       INSERT OR IGNORE INTO announcements
         (title, url, url_hash, content_hash, source_website_id, source, region,
          recruit_count, exam_date, exam_time, exam_subjects, exam_type, exam_category,
-         exam_location, registration_deadline, salary_range, publish_date,
+         exam_location, registration_deadline, salary_range, publish_date, exam_note,
          crawled_at, extracted_at, status, raw_html)
-      VALUES (?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, 'active', ?)
+      VALUES (?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, 'active', ?)
     `).bind(
       item.title,
       item.url,
@@ -725,6 +726,7 @@ async function importAnnouncements(request, env) {
       item.registrationDeadline || null,
       item.salaryRange || null,
       item.publishDate || null,
+      item.examNote || null,
       crawledAt,
       new Date().toISOString(),
       rawHtml

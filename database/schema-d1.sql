@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS announcements (
   exam_location TEXT,
   registration_deadline TEXT,
   salary_range TEXT,
+  exam_note TEXT,  -- 笔试状态说明：'免笔试'（整条公告无笔试，前端显示"无笔试"）；NULL=有笔试或未标记
 
   -- 时间戳
   publish_date TEXT,

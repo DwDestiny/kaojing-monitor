@@ -150,23 +150,89 @@ function autoFix(item) {
     }
   }
 
-  // ── 规则5: examSubjects ──
+  // ── 规则5: examSubjects（增强：剥离描述性文字，保留纯科目名）──
   if (item.examSubjects) {
     if (!Array.isArray(item.examSubjects)) {
       changes.push(`examSubjects: 非数组→清空`);
       item.examSubjects = [];
     } else {
-      const cleaned = item.examSubjects
-        .map(s => String(s).trim())
-        .filter(s => s.length > 0 && s.length <= 60);
-      if (cleaned.length !== item.examSubjects.length || cleaned.length > 20) {
-        changes.push(`examSubjects: ${item.examSubjects.length}项→${cleaned.length}项(清洗)`);
+      // 拆平（AI 可能把"综合应用能力两科，满分均为150分"塞进一个元素）→ 每项净化 → 去重
+      const flat = [];
+      for (const s of item.examSubjects) {
+        flat.push(...String(s).split(/[,，、;；]/).map(x => x.trim()).filter(Boolean));
       }
-      item.examSubjects = cleaned.slice(0, 20);
+      const cleaned = flat.map(cleanSubject).filter(s => s.length >= 2 && s.length <= 30);
+      const unique = [...new Set(cleaned)];
+      if (JSON.stringify(unique) !== JSON.stringify(item.examSubjects)) {
+        changes.push(`examSubjects: ${item.examSubjects.length}项→${unique.length}项(净化描述)`);
+      }
+      item.examSubjects = unique.slice(0, 20);
     }
   }
 
+  // ── 规则7: 笔试状态 examNote ──
+  // 整条公告明确无笔试（直接业务考核/简化程序直接面试/免笔试等）且未提取到笔试日期 → 标记"免笔试"（前端显示"无笔试"）
+  if (item.examNote === undefined) {
+    let examNote = null;
+    if (!item.examDate) {
+      // 无笔试强信号（复合模式，避免"无笔试要求的博士岗位"这类部分岗位表述误标）
+      const patterns = [
+        /直接业务考核/,                                                    // 广东：考试采取直接业务考核方式进行
+        /(?:简化程序|采取简化程序)?(?:组织)?直接面试[^。]{0,30}(?:面试成绩|总成绩|即为)/, // 山东：简化程序直接面试，面试成绩即为总成绩
+        /免笔试|不设笔试|无需笔试|不组织笔试|不进行笔试|无笔试(?!要求)/,   // 强词（排除"无笔试要求"）
+      ];
+      let hit = null;
+      for (const p of patterns) {
+        const m = text.match(p);
+        if (m) { hit = { pattern: p, index: m.index }; break; }
+      }
+      if (hit) {
+        // 排除：关键词 ±40 字内出现"岗位/部分/个别/可以/可"→ 部分岗位免笔试，不标记整条
+        const ctx = text.slice(Math.max(0, hit.index - 40), hit.index + 40);
+        const partTime = /岗位|部分|个别|可以|可根据|的岗位/.test(ctx);
+        const hasExamTime = /笔试时间|笔试日期|笔试定于|笔试于|笔试安排|笔试拟|笔试另行/.test(ctx);
+        if (!partTime && !hasExamTime) {
+          examNote = '免笔试';
+        }
+      }
+    }
+    item.examNote = examNote;
+    if (examNote) changes.push(`examNote: 标记免笔试`);
+  }
+
   return changes;
+}
+
+/** 纯科目名黑名单（净化后只剩这些通用词 → 丢弃） */
+const SUBJECT_STOPWORDS = new Set([
+  '笔试', '面试', '单科', '两科', '一科', '主要', '设置', '均设置',
+  '综合类', '专业类', '公共类', '管理类', '工勤类', '教育类', '卫生类', '其他类',
+  '考试', '科目', '闭卷', '开卷', '全部', '部分', '内容',
+]);
+
+/** 科目名净化：剥离描述性前缀/后缀，返回纯科目名（空串表示丢弃） */
+function cleanSubject(raw) {
+  let t = String(raw).trim();
+  // 前缀剥离（长前缀优先）
+  t = t.replace(/^.*?笔试科目为/, '');   // 笔试采取闭卷的方式进行，笔试科目为X
+  t = t.replace(/^.*?考试科目为/, '');
+  t = t.replace(/^.*?科目为/, '');
+  t = t.replace(/^(?:笔试科目|考试科目)[：:]\s*/, '');
+  t = t.replace(/^(?:一科|设置一科|均设置一科)[，,，]?\s*(?:主要内容为|考试内容主要为|考试内容为|考试内容包括|内容为|内容主要包括)?\s*/, '');
+  t = t.replace(/^(?:综合类|专业类|公共类|管理类|工勤类|教育类|卫生类|其他类)[，,]\s*(?:考试内容主要为|考试内容为|内容为|考试内容)?\s*/, '');
+  t = t.replace(/^(?:考试)?内容包括?[：:]?\s*/, '');
+  t = t.replace(/^(?:考试)?内容(?:主要)?为[：:]?\s*/, '');
+  t = t.replace(/^考试内容[：:]\s*/, '');
+  // 截断描述后缀（满分/分为/两科/一科/成绩/题型/教材等）——cut>=0 时截断（含位置0→空串丢弃）
+  const cut = t.search(/(满分|分为|两科|一科$|各[科门]|采取|笔试成绩|总分为|成绩|最低合格|题型|无指定|参考教材|主要包括|等基础性|内容为|内容包括|笔试时间|笔试后|笔试情况|笔试分|笔试)/);
+  if (cut >= 0) t = t.slice(0, cut);
+  // 去残留标点/说明
+  t = t.replace(/[，,]\s*笔试\s*$/, '');   // "相关岗位专业知识， 笔试" → "相关岗位专业知识"
+  t = t.replace(/[，。、;；：:\s]+$/g, '').trim();
+  t = t.replace(/\s+/g, '');              // 去内部空格（"岗位 专业相关知识" → "岗位专业相关知识"）
+  // 通用词/过短 → 丢弃
+  if (SUBJECT_STOPWORDS.has(t) || t.length < 2) return '';
+  return t;
 }
 
 // 导出供 upload-to-d1.js 复用（被 import 时不执行下方 CLI 主流程）

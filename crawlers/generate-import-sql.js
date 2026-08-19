@@ -53,6 +53,7 @@ function generateAnnouncementsSql(data) {
       escapeSql(item.registrationDeadline),
       escapeSql(item.salaryRange),
       escapeSql(item.publishDate),
+      escapeSql(item.examNote), // 笔试状态：'免笔试' 或 NULL
       crawledAtVal, // 真实爬取时间（不再统一用当前时间）
       escapeSql(new Date().toISOString()), // extracted_at
       escapeSql('active'),
@@ -60,7 +61,7 @@ function generateAnnouncementsSql(data) {
     ];
 
     sql.push(
-      `INSERT OR IGNORE INTO announcements (title, url, url_hash, content_hash, source_website_id, source, region, recruit_count, exam_date, exam_time, exam_subjects, exam_type, exam_category, exam_location, registration_deadline, salary_range, publish_date, crawled_at, extracted_at, status, raw_html) VALUES (${values.join(', ')});`
+      `INSERT OR IGNORE INTO announcements (title, url, url_hash, content_hash, source_website_id, source, region, recruit_count, exam_date, exam_time, exam_subjects, exam_type, exam_category, exam_location, registration_deadline, salary_range, publish_date, exam_note, crawled_at, extracted_at, status, raw_html) VALUES (${values.join(', ')});`
     );
   }
 

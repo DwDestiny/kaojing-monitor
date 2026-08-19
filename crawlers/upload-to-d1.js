@@ -55,6 +55,7 @@ const items = data.map((item) => ({
   registrationDeadline: item.registrationDeadline,
   salaryRange: item.salaryRange,
   publishDate: item.publishDate,
+  examNote: item.examNote,
   crawledAt: item.crawledAt || item.crawled_at,
   rawHtml: item.rawHtml,
   complianceLevel: item.complianceLevel,

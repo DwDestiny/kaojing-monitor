@@ -12,20 +12,29 @@ export function formatRecruitCount(count: number | null | undefined): string {
   return `${formatNumber(count)} 人`;
 }
 
-/** 笔试时间：日期 + 时段 */
+/** 笔试时间：日期 + 时段；examNote='免笔试' → 无笔试；两者皆空 → 笔试时间待定 */
 export function formatExamSchedule(
   examDate: string | null | undefined,
-  examTime: string | null | undefined
+  examTime: string | null | undefined,
+  examNote?: string | null
 ): string {
-  if (!examDate && !examTime) return "待定";
+  if (examNote === "免笔试") return "无笔试";
+  if (!examDate && !examTime) return "笔试时间待定";
   if (examDate && examTime) return `${examDate} ${examTime}`;
-  return examDate || examTime || "待定";
+  return examDate || examTime || "笔试时间待定";
 }
 
-/** 科目列表 */
+/** 科目列表（兜底净化：剥离"满分/两科/成绩"等描述后缀，与后端规则引擎净化一致） */
 export function formatSubjects(subjects: string[] | null | undefined): string {
   if (!subjects || subjects.length === 0) return "待定";
-  return subjects.join("、");
+  const cleaned = subjects
+    .map((s) => {
+      const cut = s.search(/(满分|分为|两科|一科$|成绩|最低合格|题型|无指定|内容为|笔试)/);
+      let t = cut >= 0 ? s.slice(0, cut) : s;
+      return t.replace(/[，。、;；：:]+$/, "").trim();
+    })
+    .filter(Boolean);
+  return cleaned.length > 0 ? cleaned.join("、") : "待定";
 }
 
 /** 相对/本地时间 */
