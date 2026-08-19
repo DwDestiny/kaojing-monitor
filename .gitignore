@@ -12,3 +12,14 @@ local/
 *.db-journal
 .vscode/
 .idea/
+
+# 本地密钥（含 AI_API_TOKEN 等，禁止提交）
+.dev.vars.local
+*.secret
+# 爬虫生成的临时 SQL/日志（可从 processed-data.json 重新生成）
+crawlers/output/import-*.sql
+crawlers/output/validation-report.json
+crawlers/output/low-confidence.log
+# 备份文件
+*.bak
+*.backup

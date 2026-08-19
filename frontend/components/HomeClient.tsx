@@ -15,7 +15,6 @@ import {
   fetchStats,
   fetchSubjects,
 } from '@/lib/api';
-import { MOCK_STATS } from '@/lib/mock-data';
 import type { Announcement, Pagination as PaginationType, Stats as StatsType } from '@/types';
 
 export default function HomeClient() {
@@ -26,7 +25,8 @@ export default function HomeClient() {
   const page = Math.max(1, Number(searchParams.get('page') || '1') || 1);
 
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<StatsType>(MOCK_STATS);
+  // stats 初始为 null：不再用 MOCK_STATS 兜底，加载成功后填充真实数据
+  const [stats, setStats] = useState<StatsType | null>(null);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [pagination, setPagination] = useState<PaginationType>({
     page: 1, pageSize: 20, total: 0, totalPages: 1,
@@ -35,29 +35,57 @@ export default function HomeClient() {
   const [examTypes, setExamTypes] = useState<Awaited<ReturnType<typeof fetchExamTypes>>>([]);
   const [subjects, setSubjects] = useState<Awaited<ReturnType<typeof fetchSubjects>>>([]);
   const [listError, setListError] = useState<string | null>(null);
+  // 各数据源独立错误态：失败时展示错误提示而非静默吞错
+  const [statsError, setStatsError] = useState<string | null>(null);
+  const [regionsError, setRegionsError] = useState<string | null>(null);
+  const [examTypesError, setExamTypesError] = useState<string | null>(null);
+  const [subjectsError, setSubjectsError] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
     setListError(null);
+    setStatsError(null);
+    setRegionsError(null);
+    setExamTypesError(null);
+    setSubjectsError(null);
+
+    const errorMessage = (err: unknown) =>
+      err instanceof Error ? err.message : '加载失败';
 
     Promise.all([
-      fetchStats().catch(() => MOCK_STATS),
+      // 各数据源独立处理：失败仅记录对应 error state，不阻断其他数据加载
+      fetchStats().catch((err) => {
+        setStatsError(errorMessage(err));
+        return null;
+      }),
       fetchAnnouncements({ region, examType, examCategory: subject, page, pageSize: 20 }),
-      fetchRegions().catch(() => []),
-      fetchExamTypes().catch(() => []),
-      fetchSubjects().catch(() => []),
+      fetchRegions().catch((err) => {
+        setRegionsError(errorMessage(err));
+        return [];
+      }),
+      fetchExamTypes().catch((err) => {
+        setExamTypesError(errorMessage(err));
+        return [];
+      }),
+      fetchSubjects().catch((err) => {
+        setSubjectsError(errorMessage(err));
+        return [];
+      }),
     ])
       .then(([statsRes, listRes, regionsRes, examTypesRes, subjectsRes]) => {
         setStats(statsRes);
         setAnnouncements(listRes.data);
         setPagination(listRes.pagination);
 
+        // stats 失败时 statsRes 为 null，跳过地区计数补充
+        const statsByRegion = statsRes?.byRegion ?? [];
+
         let finalRegions = regionsRes.length
           ? regionsRes
-          : (statsRes.byRegion ?? []).map((r) => ({ name: r.region, count: r.count }));
+          : statsByRegion.map((r) => ({ name: r.region, count: r.count }));
 
-        if (statsRes.byRegion?.length) {
-          const countMap = new Map(statsRes.byRegion.map((r) => [r.region, r.count]));
+        if (statsByRegion.length) {
+          const countMap = new Map(statsByRegion.map((r) => [r.region, r.count]));
           finalRegions = finalRegions.map((r) => ({
             ...r,
             count: countMap.get(r.name) ?? r.count,
@@ -69,7 +97,7 @@ export default function HomeClient() {
         setSubjects(subjectsRes);
       })
       .catch((err) => {
-        setListError(err instanceof Error ? err.message : '加载失败');
+        setListError(errorMessage(err));
       })
 
       .finally(() => {
@@ -97,7 +125,11 @@ export default function HomeClient() {
 
   return (
     <>
-      <Stats stats={stats} />
+      {statsError ? (
+        <ErrorState message={statsError} />
+      ) : stats ? (
+        <Stats stats={stats} />
+      ) : null}
       <div
         id="announcements"
         className="mx-auto max-w-content px-space-3 pb-space-8 sm:px-space-5 sm:pb-space-10"
@@ -107,10 +139,11 @@ export default function HomeClient() {
             regions={regions}
             examTypes={examTypes}
             subjects={subjects}
-            totalCount={stats.total}
+            totalCount={stats?.total}
             activeRegion={region}
             activeExamType={examType}
             activeSubject={subject}
+            error={regionsError ?? examTypesError ?? subjectsError}
           />
           <section aria-label="公告列表">
             {loading ? (
@@ -139,7 +172,7 @@ export default function HomeClient() {
           </section>
         </div>
       </div>
-      <Footer lastUpdate={stats.lastUpdate} />
+      <Footer lastUpdate={stats?.lastUpdate ?? null} />
     </>
   );
 }

@@ -10,12 +10,18 @@ import { fetchAllDetails } from './core/detail-fetcher.js';
 // import { hybridExtract } from './core/hybrid-extractor.js';
 import { extractFields as ruleExtractFields } from './core/extractor.js';
 import { validateData } from './core/validator.js';
-import { readFileSync, writeFileSync } from 'fs';
+// appendFileSync/mkdirSync：用于追加 low-confidence.log（置信度审计）
+import { readFileSync, writeFileSync, appendFileSync, mkdirSync } from 'fs';
 
 const WORKER_AI_BASE = 'https://kaojing-api.dangwei121105.workers.dev/api/ai';
 
+// AI 端点鉴权 token（对应 api/wrangler.toml 的 AI_API_TOKEN）
+// 本地开发：通过环境变量 AI_API_TOKEN 传入；未配置时尝试读 .env.local
+// ⚠️ 不要把真实 token 硬编码提交到 git（token 已写入 api/wrangler.toml，注意仓库可见性）
+const AI_TOKEN = process.env.AI_API_TOKEN || '';
+
 /**
- * 调用已部署的 Worker AI 端点（带重试）
+ * 调用已部署的 Worker AI 端点（带重试 + Bearer 鉴权）
  * @param {string} endpoint - 'classify' | 'extract'
  * @param {object} data - 请求体
  * @param {number} retries - 失败后最多重试次数（默认 2，合计最多 3 次调用）
@@ -26,9 +32,12 @@ async function callWorkerAI(endpoint, data, retries = 2) {
 
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (AI_TOKEN) headers['Authorization'] = `Bearer ${AI_TOKEN}`;
+
       const response = await fetch(`${WORKER_AI_BASE}/${endpoint}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(data),
       });
 
@@ -133,7 +142,11 @@ async function filterAnnouncements(announcements) {
 }
 
 /**
- * AI 优先提取，失败或无效时规则兜底
+ * 字段提取：分层解耦 —— 规则优先 + AI 只补缺失 + 置信度审计
+ *  1. 规则提取（快、稳、可解释），始终执行
+ *  2. AI 补充规则缺失的字段（失败时保持规则结果）
+ *  3. 合并：规则值优先，AI 不覆盖规则已提取的值（修复 hasValidData 恒真短路导致的日期全 NULL）
+ *  4. 置信度 < 0.5 记入 output/low-confidence.log 供人工抽查
  * @param {Array} announcements
  * @returns {Promise<{announcements: Array, stats: object}>}
  */
@@ -141,44 +154,76 @@ async function extractAnnouncements(announcements) {
   const stats = {
     aiCalls: 0,
     aiSuccess: 0,
-    ruleFallback: 0,
+    ruleFallback: 0, // AI 调用失败、退回纯规则结果的条数
+    rulePrimary: 0,  // 规则提供主值（任一关键字段非空）的条数
   };
   const results = [];
+  const lowConfidenceLog = './output/low-confidence.log';
+
+  // 确保 output 目录存在（追加置信度日志用）
+  mkdirSync('./output', { recursive: true });
 
   for (const item of announcements) {
     const title = item.title || '';
-    let finalFields = {};
-    let usedAI = false;
 
-    // 第一优先级：调用 Worker AI 提取
+    // 第一层：规则提取（优先级最高，覆盖日期/类型/地点等 AI 经常缺失的字段）
+    const ruleFields = ruleExtractFields(item);
+
+    // 统计：规则是否提供了主值（任一关键字段有非空值即计入 rulePrimary）
+    const hasRulePrimary =
+      ruleFields.recruitCount != null ||
+      (Array.isArray(ruleFields.examSubjects) && ruleFields.examSubjects.length > 0) ||
+      ruleFields.examDate != null ||
+      ruleFields.examTime != null ||
+      (ruleFields.examType != null && ruleFields.examType !== '其他') ||
+      ruleFields.registrationDeadline != null ||
+      ruleFields.examLocation != null ||
+      ruleFields.salaryRange != null;
+    if (hasRulePrimary) stats.rulePrimary++;
+
+    // 第二层：AI 补充缺失字段；调用失败时保留规则兜底
+    let aiFields = {};
     try {
       stats.aiCalls++;
-      const aiFields = await callWorkerAI('extract', {
+      const aiResult = await callWorkerAI('extract', {
         title: item.title,
         rawHtml: item.rawHtml || '',
       });
-
-      // 验证 AI 返回是否有效（至少一个关键字段非空）
-      const hasValidData =
-        aiFields?.recruitCount != null ||
-        (Array.isArray(aiFields?.examSubjects) && aiFields.examSubjects.length > 0) ||
-        aiFields?.examDate != null;
-
-      if (hasValidData) {
-        finalFields = aiFields;
-        usedAI = true;
-        stats.aiSuccess++;
-        console.log(`  ✓ AI 提取成功: ${title}`);
-      }
+      // 防御：AI 返回非对象（null/字符串等）时降级为空对象
+      aiFields = aiResult && typeof aiResult === 'object' ? aiResult : {};
+      stats.aiSuccess++;
+      console.log(`  ✓ AI 提取成功: ${title}`);
     } catch (err) {
+      stats.ruleFallback++;
       console.warn(`  ⚠ AI 提取失败，使用规则兜底: ${title} (${err.message})`);
     }
 
-    // 第二优先级：AI 失败或无效数据时，用规则兜底
-    if (!usedAI) {
-      finalFields = ruleExtractFields(item);
-      stats.ruleFallback++;
-      console.log(`  → 规则兜底: ${title}`);
+    // 第三层：合并 —— 规则字段优先，AI 只补规则缺失的字段
+    const finalFields = {
+      ...aiFields,
+      recruitCount: ruleFields.recruitCount ?? aiFields.recruitCount,
+      examDate: ruleFields.examDate ?? aiFields.examDate,
+      examTime: ruleFields.examTime ?? aiFields.examTime,
+      examSubjects: ruleFields.examSubjects?.length > 0 ? ruleFields.examSubjects : aiFields.examSubjects,
+      examType: ruleFields.examType != null && ruleFields.examType !== '其他' ? ruleFields.examType : aiFields.examType,
+      registrationDeadline: ruleFields.registrationDeadline ?? aiFields.registrationDeadline,
+      examLocation: ruleFields.examLocation ?? aiFields.examLocation,
+      salaryRange: ruleFields.salaryRange ?? aiFields.salaryRange,
+    };
+
+    // 第四层：置信度审计 —— 低置信度记日志，供人工抽查
+    if (aiFields.confidence != null && aiFields.confidence < 0.5) {
+      const auditLine = JSON.stringify({
+        title,
+        confidence: aiFields.confidence,
+        url: item.url || '',
+      });
+      console.warn(`  ⚠ 低置信度提取: ${title} (confidence=${aiFields.confidence})`);
+      try {
+        appendFileSync(lowConfidenceLog, auditLine + '\n', 'utf-8');
+      } catch (err) {
+        console.warn(`  ⚠ 写入 low-confidence.log 失败: ${err.message}`);
+      }
     }
 
     results.push({
@@ -187,7 +232,7 @@ async function extractAnnouncements(announcements) {
     });
   }
 
-  console.log(`\n提取统计: AI 成功 ${stats.aiSuccess}/${stats.aiCalls}, 规则兜底 ${stats.ruleFallback}`);
+  console.log(`\n提取统计: AI 调用 ${stats.aiCalls} 次, 成功 ${stats.aiSuccess} 次, 规则兜底 ${stats.ruleFallback} 条, 规则主值 ${stats.rulePrimary} 条`);
   return { announcements: results, stats };
 }
 
@@ -233,7 +278,7 @@ export async function processData(siteConfig, options = {}) {
   // 4. AI 优先字段提取（失败则规则兜底）
   console.log('  [4/6] 提取字段...');
   const { announcements: extracted, stats: extractStats } = await extractAnnouncements(recentAnnouncements);
-  console.log(`  ✓ 提取完成（AI调用 ${extractStats.aiCalls} 次，成功 ${extractStats.aiSuccess} 次，规则兜底 ${extractStats.ruleFallback} 次）`);
+  console.log(`  ✓ 提取完成（AI调用 ${extractStats.aiCalls} 次，成功 ${extractStats.aiSuccess} 次，规则兜底 ${extractStats.ruleFallback} 条，规则主值 ${extractStats.rulePrimary} 条）`);
 
   // 5. 去重
   console.log('  [5/6] 去重...');

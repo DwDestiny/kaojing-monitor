@@ -10,6 +10,8 @@ interface FilterProps {
   activeRegion?: string;
   activeExamType?: string;
   activeSubject?: string;
+  /** 筛选数据加载失败时展示的提示信息 */
+  error?: string | null;
 }
 
 interface FilterLinkProps {
@@ -48,6 +50,7 @@ export default function Filter({
   activeRegion,
   activeExamType,
   activeSubject,
+  error,
 }: FilterProps) {
   const baseParams = {
     region: activeRegion,
@@ -60,6 +63,16 @@ export default function Filter({
       className="static flex gap-space-5 overflow-x-auto lg:sticky lg:top-[120px] lg:h-fit lg:block lg:overflow-visible"
       aria-label="筛选条件"
     >
+      {/* 筛选数据加载失败提示 */}
+      {error && (
+        <div
+          className="mb-space-3 min-w-[160px] bg-bg-secondary px-space-3 py-space-2 text-[13px] text-text-secondary lg:mb-space-5"
+          role="alert"
+        >
+          筛选数据加载失败：{error}
+        </div>
+      )}
+
       {/* 地区 */}
       <div className="mb-0 min-w-[160px] lg:mb-space-5">
         <h2 className="mb-space-2 text-[12px] font-semibold uppercase tracking-[0.08em] text-text-tertiary">

@@ -13,8 +13,14 @@ database_id = "6ddc90cf-ea1b-4b67-b095-7d545b8fb851"
 crons = ["7 2 * * *", "23 14 * * *"]
 
 # 环境变量
+# AI_API_TOKEN 已迁移为 Cloudflare Secret（wrangler secret put AI_API_TOKEN），不落 git
 [vars]
 ENVIRONMENT = "production"
+# AI 端点鉴权 token（/api/ai/extract 与 /api/ai/classify 必须携带 Authorization: Bearer <此值>）
+# CORS 白名单（逗号分隔；请求 Origin 在此列表内才会返回 Access-Control-Allow-Origin）
+ALLOWED_ORIGINS = "https://kaojing-monitor.pages.dev"
+# 提取模型（可选；默认 qwen3.8-27b，可改回 qwen3-30b-a3b-fp8 省钱）
+EXTRACT_MODEL = "@cf/qwen/qwen3.8-27b"
 
 # Workers AI 绑定
 [ai]

@@ -13,38 +13,29 @@ const ACCENT_CLASSES = [
 ] as const;
 
 export default function Stats({ stats }: StatsProps) {
+  // 只展示 /api/stats 真实返回的字段：
+  // total / byRegion / byExamType（weeklyNew/upcomingExams/totalChange 后端不返回，已移除）
   const cards = [
     {
       label: "总公告数",
       value: formatNumber(stats.total),
-      change:
-        stats.totalChange != null
-          ? `较昨日 +${formatNumber(stats.totalChange)}`
-          : "实时汇总",
-    },
-    {
-      label: "本周新增",
-      value: formatNumber(stats.weeklyNew),
-      change:
-        stats.weeklyChangePercent != null
-          ? `环比 +${stats.weeklyChangePercent}%`
-          : "近 7 天",
-    },
-    {
-      label: "即将开考",
-      value: formatNumber(stats.upcomingExams),
-      change: "7 天内",
+      change: "实时汇总",
     },
     {
       label: "覆盖地区",
-      value: formatNumber(stats.regionCount),
+      value: formatNumber(stats.byRegion?.length ?? 0),
       change: "主要省市",
+    },
+    {
+      label: "考试类型",
+      value: formatNumber(stats.byExamType?.length ?? 0),
+      change: "分类统计",
     },
   ];
 
   return (
     <section
-      className="mx-auto grid max-w-content grid-cols-1 gap-space-3 px-space-3 py-space-3 sm:grid-cols-2 sm:px-space-5 sm:py-space-5 lg:grid-cols-4"
+      className="mx-auto grid max-w-content grid-cols-1 gap-space-3 px-space-3 py-space-3 sm:grid-cols-2 sm:px-space-5 sm:py-space-5 lg:grid-cols-3"
       aria-label="数据统计"
     >
       {cards.map((card, index) => (

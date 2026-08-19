@@ -350,10 +350,23 @@ export async function fetchExamTypes(): Promise<ExamTypeOption[]> {
 }
 
 /**
- * 科目筛选项
+ * 科目筛选项（后端 GET /api/subjects，dev 环境失败时回退 mock）
  */
 export async function fetchSubjects(): Promise<SubjectOption[]> {
-  return MOCK_SUBJECTS;
+  const result = await apiFetch<{
+    data?: Array<{ name: string; count?: number }>;
+  }>("/api/subjects");
+
+  if (!result.ok) {
+    if (process.env.NODE_ENV === "development" || process.env.USE_MOCK === "1") {
+      console.warn("[api] fetchSubjects fallback to mock:", result.error);
+      return MOCK_SUBJECTS;
+    }
+    throw new Error(result.error);
+  }
+
+  const raw = result.data.data ?? [];
+  return raw.map((item) => ({ name: item.name, count: item.count }));
 }
 
 export { MOCK_STATS, MOCK_EXAM_TYPES, MOCK_SUBJECTS };
