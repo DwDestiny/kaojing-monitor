@@ -64,6 +64,11 @@ function ruleDeadline(text, publishDate) {
 
 /** 从原文提取笔试日期（强化版：支持"笔试时间/笔试日期/定于/笔试于/笔试X月X日/X月X日笔试"等） */
 function ruleExamDate(text) {
+  // 站点名无害化：避免"兵团考试信息网""人事考试网"中的"考试"被误判为考试事件
+  text = text
+    .replace(/考试信息网/g, '信息网')
+    .replace(/人事考试网/g, '考试院')
+    .replace(/考试院网/g, '考院网');
   // 模式1: 笔试时间/笔试日期：2026年X月X日 / 笔试时间为X / 笔试定于X
   const m1 = text.match(/(?:笔试|考试)(?:时间|日期)?[：:为是]?\s*(?:定于|于|为)?\s*(\d{4})[年\-/](\d{1,2})[月\-/](\d{1,2})[日号]/);
   if (m1) return `${m1[1]}-${String(m1[2]).padStart(2, '0')}-${String(m1[3]).padStart(2, '0')}`;
@@ -262,9 +267,17 @@ function autoFix(item) {
         if (m) { hit = { pattern: p, index: m.index }; break; }
       }
       if (hit) {
-        // 排除：关键词 ±40 字内出现"岗位/部分/个别/可以/可"→ 部分岗位免笔试，不标记整条
+        // 排除部分岗位语境（按模式分组：直接业务考核通常是整条无笔试，排除词收窄）
         const ctx = text.slice(Math.max(0, hit.index - 40), hit.index + 40);
-        const partTime = /岗位|部分|个别|可以|可根据|的岗位/.test(ctx);
+        const p = hit.pattern.source;
+        let partTime;
+        if (p.includes('直接业务考核')) {
+          partTime = /部分|个别|其中|只限|仅限/.test(ctx);
+        } else if (p.includes('直接面试')) {
+          partTime = /部分|个别|其中|可以|可根据|岗位|（[^）]*\)/.test(ctx);
+        } else {
+          partTime = /部分|个别|其中|可以|可根据|岗位|要求/.test(ctx);
+        }
         const hasExamTime = /笔试时间|笔试日期|笔试定于|笔试于|笔试安排|笔试拟|笔试另行/.test(ctx);
         if (!partTime && !hasExamTime) {
           examNote = '免笔试';
