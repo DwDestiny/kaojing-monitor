@@ -34,7 +34,7 @@ function generateAnnouncementsSql(data) {
       item.recruitCount || 'NULL',
       escapeSql(item.examDate),
       escapeSql(item.examTime),
-      item.examSubjects?.length > 0 ? escapeSql(item.examSubjects.join(',')) : 'NULL',
+      Array.isArray(item.examSubjects) && item.examSubjects.length > 0 ? escapeSql(item.examSubjects.join(',')) : (typeof item.examSubjects === 'string' && item.examSubjects ? escapeSql(item.examSubjects) : 'NULL'),
       escapeSql(item.examType),
       'NULL', // exam_category
       escapeSql(item.examLocation),

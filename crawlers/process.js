@@ -50,7 +50,7 @@ async function callWorkerAI(endpoint, data, retries = 2) {
 }
 
 /**
- * 三级过滤：黑名单拒绝 → 白名单通过 → Worker AI 分类
+ * 两级过滤：黑名单拒绝 → 白名单通过，无白名单命中直接拒绝（不调用 AI）
  * @param {Array} announcements
  * @returns {Promise<{filtered: Array, stats: object}>}
  */
@@ -58,26 +58,47 @@ async function filterAnnouncements(announcements) {
   const blacklist = [
     // 操作类
     '报名入口', '考试报名入口', '注册指南', '操作手册', '操作指南', '账号注册',
-    '缴费入口', '准考证打印', '成绩查询',
+    '缴费入口', '准考证打印', '准考证下载', '成绩查询',
     // 后续流程类
     '心理测评', '心理测评链接', '心理测评通知',
     '体检通知', '体检安排',
     '资格审查结果', '资格复审',
     '成绩公告', '面试名单', '面试通知',
-    '拟聘用', '公示名单', '公示',
+    '拟聘用', '拟聘', '拟任', '公示名单', '人选公示', '特聘人员公示',
+    // 非招考通告类
+    '变更办公地址', '变更地址', '关于变更',
+    '证书发放', '证书领取',
+    '档案',
+    '绩效',
+    '职称',
+    '博士后',
+    '资助对象',
+    '表彰推',
+    '技能大奖', '技能鉴定',
+    '就业促进',
+    '政策解读', '攻略',
     // 活动类
-    '招聘会', '宣讲会', '双选会',
+    '招聘会', '联合招聘', '人才交流会', '双选会', '宣讲会',
+    '推介会', '洽谈会', '对接会', '座谈会', '见面会',
+    '关于举办', '活动通知', '活动公告',
+    '人才夜市', '夜校',
     // 安全提醒类
-    '陷阱', '诈骗', '风险提醒', '案例'
+    '陷阱', '诈骗', '风险提醒', '案例', '警示',
+    // 劳动/社保行政类（天津等网站补充）
+    '公示', '工伤', '劳动争议', '送达公告', '用工协议',
+    '违法违规行为线索', '劳动保障书面审查', '积分落户', '社保卡',
   ];
-  const whitelist = ['招聘', '招考', '招录', '遴选'];
+  const whitelist = [
+    '招聘', '招考', '招录', '遴选', '选调',
+    '公开招', '公开考试', '三支一扶',
+  ];
   const negativeKeywords = ['陷阱', '诈骗', '虚假', '风险', '提醒', '案例'];
 
   const filtered = [];
   const stats = {
     blacklistRejects: 0,
     whitelistPasses: 0,
-    aiCalls: 0,
+    noWhitelistRejects: 0,
   };
 
   for (const item of announcements) {
@@ -103,28 +124,16 @@ async function filterAnnouncements(announcements) {
       continue;
     }
 
-    // 第三级：不确定 → Worker AI 分类；失败时保守保留
-    try {
-      stats.aiCalls++;
-      const result = await callWorkerAI('classify', {
-        title: item.title,
-        snippet: item.snippet || '',
-      });
-
-      if (result && result.isRecruitment === true) {
-        filtered.push(item);
-      }
-    } catch (err) {
-      console.warn(`  ⚠ AI 分类失败，保守保留: ${title} (${err.message})`);
-      filtered.push(item);
-    }
+    // 第三级：无白名单关键词 → 直接拒绝（不调用 AI）
+    console.log(`  🚫 无白名单关键词，拒绝: "${title}"`);
+    stats.noWhitelistRejects++;
   }
 
   return { filtered, stats };
 }
 
 /**
- * 规则提取 + 按需 Worker AI 补全
+ * AI 优先提取，失败或无效时规则兜底
  * @param {Array} announcements
  * @returns {Promise<{announcements: Array, stats: object}>}
  */
@@ -132,53 +141,44 @@ async function extractAnnouncements(announcements) {
   const stats = {
     aiCalls: 0,
     aiSuccess: 0,
+    ruleFallback: 0,
   };
   const results = [];
 
   for (const item of announcements) {
     const title = item.title || '';
-    const ruleFields = ruleExtractFields(item);
-    let finalFields = { ...ruleFields };
+    let finalFields = {};
+    let usedAI = false;
 
-    const needsAI =
-      (ruleFields.recruitCount === null && (title.includes('招聘') || title.includes('招考'))) ||
-      title.includes('详见附件') ||
-      title.includes('岗位表') ||
-      title.includes('岗位计划') ||
-      title.includes('附件') ||
-      title.includes('岗位一览表');
+    // 第一优先级：调用 Worker AI 提取
+    try {
+      stats.aiCalls++;
+      const aiFields = await callWorkerAI('extract', {
+        title: item.title,
+        rawHtml: item.rawHtml || '',
+      });
 
-    if (needsAI) {
-      try {
-        stats.aiCalls++;
-        const aiFields = await callWorkerAI('extract', {
-          title: item.title,
-          rawHtml: item.rawHtml || '',
-        });
+      // 验证 AI 返回是否有效（至少一个关键字段非空）
+      const hasValidData =
+        aiFields?.recruitCount != null ||
+        (Array.isArray(aiFields?.examSubjects) && aiFields.examSubjects.length > 0) ||
+        aiFields?.examDate != null;
 
-        const mergeKeys = [
-          'recruitCount',
-          'examSubjects',
-          'examDate',
-          'registrationDeadline',
-          'salaryRange',
-        ];
-
-        let gotValid = false;
-        for (const key of mergeKeys) {
-          const value = aiFields?.[key];
-          if (value === null || value === undefined) continue;
-          if (key === 'examSubjects' && (!Array.isArray(value) || value.length === 0)) continue;
-          finalFields[key] = value;
-          gotValid = true;
-        }
-
-        if (gotValid) {
-          stats.aiSuccess++;
-        }
-      } catch (err) {
-        console.warn(`  ⚠ AI 提取失败，使用规则结果: ${title} (${err.message})`);
+      if (hasValidData) {
+        finalFields = aiFields;
+        usedAI = true;
+        stats.aiSuccess++;
+        console.log(`  ✓ AI 提取成功: ${title}`);
       }
+    } catch (err) {
+      console.warn(`  ⚠ AI 提取失败，使用规则兜底: ${title} (${err.message})`);
+    }
+
+    // 第二优先级：AI 失败或无效数据时，用规则兜底
+    if (!usedAI) {
+      finalFields = ruleExtractFields(item);
+      stats.ruleFallback++;
+      console.log(`  → 规则兜底: ${title}`);
     }
 
     results.push({
@@ -187,6 +187,7 @@ async function extractAnnouncements(announcements) {
     });
   }
 
+  console.log(`\n提取统计: AI 成功 ${stats.aiSuccess}/${stats.aiCalls}, 规则兜底 ${stats.ruleFallback}`);
   return { announcements: results, stats };
 }
 
@@ -204,11 +205,11 @@ export async function processData(siteConfig, options = {}) {
   const rawData = await crawl(siteConfig, options);
   console.log(`  ✓ 爬取 ${rawData.length} 条`);
 
-  // 2. 混合内容过滤（规则 + Worker AI）
-  console.log('  [2/6] 混合内容过滤...');
+  // 2. 纯规则内容过滤（黑名单 + 白名单，不调用 AI）
+  console.log('  [2/6] 内容过滤...');
   const { filtered, stats: filterStats } = await filterAnnouncements(rawData);
   console.log(
-    `  ✓ 过滤后 ${filtered.length} 条（黑名单拒绝 ${filterStats.blacklistRejects}，白名单通过 ${filterStats.whitelistPasses}，AI调用 ${filterStats.aiCalls}）`
+    `  ✓ 过滤后 ${filtered.length} 条（黑名单拒绝 ${filterStats.blacklistRejects}，白名单通过 ${filterStats.whitelistPasses}，无白名单拒绝 ${filterStats.noWhitelistRejects}）`
   );
 
   // 3. 爬取详情页
@@ -216,10 +217,23 @@ export async function processData(siteConfig, options = {}) {
   const withDetails = await fetchAllDetails(filtered);
   console.log(`  ✓ 详情页爬取完成`);
 
-  // 4. 混合字段提取（规则 + Worker AI）
+  // 日期过滤：只保留最近 6 个月内的公告
+  const sixMonthsAgo = new Date();
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+  const cutoffDate = sixMonthsAgo.toISOString().split('T')[0]; // 'YYYY-MM-DD'
+
+  console.log(`  [3.5/6] 过滤旧公告（保留 ${cutoffDate} 之后发布的）...`);
+  const beforeFilter = withDetails.length;
+  const recentAnnouncements = withDetails.filter(item => {
+    const pubDate = item.publishDate; // 'YYYY-MM-DD' 格式
+    return pubDate && pubDate >= cutoffDate;
+  });
+  console.log(`  ✓ 已过滤: ${beforeFilter} → ${recentAnnouncements.length} 条（移除 ${beforeFilter - recentAnnouncements.length} 条旧公告）`);
+
+  // 4. AI 优先字段提取（失败则规则兜底）
   console.log('  [4/6] 提取字段...');
-  const { announcements: extracted, stats: extractStats } = await extractAnnouncements(withDetails);
-  console.log(`  ✓ 提取完成（AI调用 ${extractStats.aiCalls} 次，成功 ${extractStats.aiSuccess} 次）`);
+  const { announcements: extracted, stats: extractStats } = await extractAnnouncements(recentAnnouncements);
+  console.log(`  ✓ 提取完成（AI调用 ${extractStats.aiCalls} 次，成功 ${extractStats.aiSuccess} 次，规则兜底 ${extractStats.ruleFallback} 次）`);
 
   // 5. 去重
   console.log('  [5/6] 去重...');
@@ -280,6 +294,11 @@ export async function processAllSites() {
   console.log(`总数据: ${stats.totalAnnouncements} 条`);
   console.log(`去重后: ${globalDeduplicated.length} 条`);
 
+  // 先保存数据，再做验证（验证失败不影响输出）
+  const outputPath = './output/processed-data.json';
+  writeFileSync(outputPath, JSON.stringify(globalDeduplicated, null, 2));
+  console.log(`\n已保存到: ${outputPath}`);
+
   // 数据验证（失败不阻止输出，只记录问题）
   const validationResults = {
     total: 0,
@@ -293,20 +312,23 @@ export async function processAllSites() {
     const result = validateData(item);
     validationResults.total++;
 
-    if (result.errors.length > 0) {
+    const errors = result.errors || [];
+    const warnings = result.warnings || [];
+
+    if (errors.length > 0) {
       validationResults.withErrors++;
-    } else if (result.warnings.length > 0) {
+    } else if (warnings.length > 0) {
       validationResults.withWarnings++;
     } else {
       validationResults.valid++;
     }
 
-    if (result.errors.length > 0 || result.warnings.length > 0) {
+    if (errors.length > 0 || warnings.length > 0) {
       validationResults.details.push({
         title: item.title,
         url: item.url,
-        warnings: result.warnings,
-        errors: result.errors
+        warnings,
+        errors
       });
     }
   }
@@ -318,11 +340,6 @@ export async function processAllSites() {
   console.log(`✓ 完全有效: ${validationResults.valid} 条`);
   console.log(`⚠ 有警告: ${validationResults.withWarnings} 条`);
   console.log(`✗ 有错误: ${validationResults.withErrors} 条`);
-
-  // 无论是否有 errors/warnings，都输出全部数据
-  const outputPath = './output/processed-data.json';
-  writeFileSync(outputPath, JSON.stringify(globalDeduplicated, null, 2));
-  console.log(`\n已保存到: ${outputPath}`);
 
   const reportPath = './output/validation-report.json';
   writeFileSync(reportPath, JSON.stringify(validationResults, null, 2));

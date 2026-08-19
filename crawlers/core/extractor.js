@@ -48,7 +48,7 @@ function extractRecruitCount(text) {
   const patterns = [
     // 允许关键词和数字之间有0-10个非数字字符（如"招聘人员18人"）
     /(?:招聘|招考|招录|拟招|计划招)[^0-9]{0,10}?(\d+)[\s]*(?:人|名)/g,
-    /共[\s]*(\d+)[\s]*(?:个)?(?:岗位|职位)[\s]*(\d+)[\s]*(?:人|名)/g,
+    /共计?[\s]*(\d+)[\s]*(?:个)?(?:岗位|职位)[\s]*(\d+)[\s]*(?:人|名)/g,
     /总计[\s]*(\d+)[\s]*(?:人|名)/g
   ];
 
@@ -80,7 +80,7 @@ function extractRecruitCount(text) {
  */
 function extractExamDate(text) {
   const patterns = [
-    /(?:笔试|考试)(?:时间|日期)?[：:为是]?\s*(\d{4})[年\-/](\d{1,2})[月\-/](\d{1,2})[日号]?/,
+    /(?:笔试|考试)(?:时间|日期)?[：:为是。]?\s*(\d{4})[年\-/](\d{1,2})[月\-/](\d{1,2})[日号]?/,
     /(\d{4})[年\-/](\d{1,2})[月\-/](\d{1,2})[日号]?\s*(?:举行|进行)?(?:笔试|考试)/,
     /(\d{1,2})[月\-/](\d{1,2})[日号]?\s*(?:举行|进行)?(?:笔试|考试)/  // 无年份，使用当前年
   ];
@@ -115,8 +115,8 @@ function extractExamDate(text) {
  */
 function extractExamTime(text) {
   const patterns = [
-    /(\d{1,2}):(\d{2})\s*[-~至到]\s*(\d{1,2}):(\d{2})/,
-    /(?:上午|下午)\s*(\d{1,2}):(\d{2})\s*[-~至到]\s*(?:上午|下午)?\s*(\d{1,2}):(\d{2})/
+    /(\d{1,2}):(\d{2})\s*[-~至到—]\s*(\d{1,2}):(\d{2})/,
+    /(?:上午|下午)\s*(\d{1,2}):(\d{2})\s*[-~至到—]\s*(?:上午|下午)?\s*(\d{1,2}):(\d{2})/
   ];
 
   for (const pattern of patterns) {
@@ -147,9 +147,9 @@ function extractExamSubjects(text) {
 
   // 按顿号和「及」分割
   const subjects = subjectsText
-    .split(/[、及]/)
-    .map(s => s.replace(/[《》\"\"\'\']/g, '').trim())
-    .filter(s => s.length > 0);
+    .split(/[、及和]/)
+    .map(s => s.replace(/[《》\"\"\'\']/g, '').replace(/[两三四五]科$/, '').trim())
+    .filter(s => s.length > 0 && !/^.{1,6}类$/.test(s));
 
   return subjects;
 }
@@ -197,6 +197,7 @@ function classifyExamType(title, text) {
 function extractRegistrationDeadline(text) {
   const patterns = [
     /(?:报名截止|报名结束)[时间日期为至]?\s*[：:]?\s*(\d{4})[年\-/](\d{1,2})[月\-/](\d{1,2})[日号]/,
+    /报名申请[^0-9]{0,20}?(\d{4})[年\-/](\d{1,2})[月\-/](\d{1,2})[日号]/,
     /(\d{4})[年\-/](\d{1,2})[月\-/](\d{1,2})[日号]?\s*(?:前|之前|截止)(?:报名)?/
   ];
 
