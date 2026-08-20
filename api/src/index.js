@@ -284,6 +284,7 @@ export async function getAnnouncementById(id, env) {
     registrationDeadline: result.registration_deadline,
     salaryRange: result.salary_range,
     publishDate: result.publish_date,
+    examNote: result.exam_note,
     crawledAt: result.crawled_at,
     rawHtml: result.raw_html,
     // P1（2026-08-20）：合规分级 + 缺失值语义（列迁移后生效，未迁移时 undefined）

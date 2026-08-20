@@ -248,14 +248,16 @@ function autoFix(item) {
       examNote = null;
     }
   } else {
-    // 补标：原文强信号（LLM 漏标时补）；WHOLESET 优先（整条免笔试招聘），其余含"岗位"语境视为部分岗位
-    const noExam = text.match(/(直接业务考核|(?:考试采取|全部|均)?简化程序直接面试[^。]{0,30}(?:面试|总成绩)|免笔试|不设笔试|无需笔试|不组织笔试|不进行笔试|无笔试(?!要求)|试讲和答辩)/);
+    // 补标：原文强信号（LLM 漏标时补）；WHOLESET 优先（整条免笔试招聘），其余含"部分岗位/个别岗位"语境视为部分岗位
+    // P1C 扩展：直接面试/田野实操测评（考核招聘模式，无笔试环节）
+    const noExam = text.match(/(直接业务考核|(?:考试采取|全部|均)?简化程序直接面试[^。]{0,30}(?:面试|总成绩)|直接面试|田野实操测评|面试[、和与]田野实操|免笔试|不设笔试|无需笔试|不组织笔试|不进行笔试|无笔试(?!要求)|试讲和答辩)/);
     if (noExam && !item.examDate) {
       const ctx = text.slice(Math.max(0, noExam.index - 50), noExam.index + 50);
       // 整条免笔试：标题含博士/高级，或原文"面向博士…招聘采取"（且非"可采取"——"可采取"=部分岗位）
       const isWholeSet = WHOLESET_RE.test(item.title || '') ||
         (WHOLESET_RE.test(ctx) && !/可采取|可以采取|可简化程序|可组织/.test(ctx));
-      const partTime = !isWholeSet && /岗位|部分|个别|其中|可以|可根据/.test(ctx);
+      // 部分岗位判定收紧：仅明确的"部分/个别岗位"语境（"岗位"字样普遍存在，不能作为部分依据）
+      const partTime = !isWholeSet && /部分(?:岗位)?|个别岗位|岗位人员(?:可以|可采取)|岗位可以|可采取简化程序/.test(ctx);
       const hasPen = /笔试/.test(ctx) || /(笔试时间|笔试日期|笔试定于|笔试于|笔试安排|笔试另行|笔试内容)/.test(text);
       if (!hasPen) {
         if (!partTime) {
@@ -270,6 +272,24 @@ function autoFix(item) {
     }
   }
   item.examNote = examNote;
+
+  // ── 规则7.5: examTime 语境校验——咨询时间/报名时间不是笔试时间（LLM 幻觉修复）──
+  // 案例：浙江"咨询时间：工作日上午9:00-11:30"→LLM 提取成考试时间；吉林"报名时间…9:00-16:00"同样
+  if (item.examTime) {
+    const et = String(item.examTime);
+    const etEscaped = et.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // 该时段紧邻"咨询时间/报名时间"字样（同句或近邻）→ 非笔试时间
+    const ctxRe = new RegExp(`(咨询时间|报名时间)[^。；;]{0,80}${etEscaped}`, 'i');
+    if (ctxRe.test(text)) {
+      changes.push(`examTime: ${et}→null(咨询/报名时间非笔试)`);
+      item.examTime = null;
+    }
+    // 整条免笔试的公告不可能有笔试时间
+    if (item.examNote === '免笔试' && item.examTime) {
+      changes.push(`examTime: ${item.examTime}→null(免笔试无笔试时间)`);
+      item.examTime = null;
+    }
+  }
 
   // ── 规则8: is_known 缺失值语义（known/unknown/na/none，记录级）──
   // known  = 关键字段（笔试日期/报名截止/人数/科目）全部有值
