@@ -31,7 +31,7 @@ const EXTRACT_SCHEMA = {
     examDate: { type: ['string', 'null'], description: '笔试日期，格式 YYYY-MM-DD' },
     examTime: { type: ['string', 'null'], description: '考试时间，如 HH:MM-HH:MM' },
     examSubjects: { type: 'array', items: { type: 'string' }, description: '考试科目列表，找不到返回空数组，保留原始科目名称' },
-    examType: { type: ['string', 'null'], description: '考试类型：事业单位/公务员/教师招聘/三支一扶/医疗卫生/国企招聘/其他' },
+    examType: { type: ['string', 'null'], description: '考试类型：事业单位/公务员/教师招聘/三支一扶/医疗卫生/国企招聘/公安辅警/其他' },
     examLocation: { type: ['string', 'null'], description: '考试地点' },
     registrationDeadline: { type: ['string', 'null'], description: '报名截止日期，格式 YYYY-MM-DD' },
     salaryRange: { type: ['string', 'null'], description: '薪资范围' },

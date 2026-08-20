@@ -64,7 +64,7 @@ function extractDeadlineRange(text, yearGuess) {
   return null;
 }
 
-const EXAM_TYPES = ['事业单位', '公务员', '教师招聘', '三支一扶', '医疗卫生', '国企招聘', '选调生', '其他'];
+const EXAM_TYPES = ['事业单位', '公务员', '教师招聘', '三支一扶', '医疗卫生', '国企招聘', '选调生', '公安辅警', '其他'];
 
 /** 科目标准化映射（按辅导员考情大表归纳） */
 const SUBJECT_ALIASES = [
