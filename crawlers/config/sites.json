@@ -302,7 +302,8 @@
       "urlAttr": "href",
       "dateSelector": null,
       "defaultDate": "today",
-      "complianceLevel": "safe"
+      "complianceLevel": "safe",
+      "notes": "海外 GitHub Actions runner 10s 超时(2026-08-20 实测)；本地中国网络正常(128条)。原因：scpta.com.cn 对海外 IP 响应慢"
     },
     {
       "id": "yunnan_hrss",
@@ -382,7 +383,8 @@
       "urlSelector": "a",
       "urlAttr": "href",
       "dateSelector": "span.pull-right",
-      "complianceLevel": "safe"
+      "complianceLevel": "safe",
+      "notes": "海外 runner ETIMEDOUT(2026-08-20)；本地中国网络正常(18条)"
     },
     {
       "id": "inner_mongolia_hrss",
@@ -402,7 +404,8 @@
       "urlSelector": "a",
       "urlAttr": "href",
       "dateSelector": "span",
-      "complianceLevel": "safe"
+      "complianceLevel": "safe",
+      "notes": "海外 runner 403 WAF(2026-08-20)；本地中国网络正常(15条)"
     },
     {
       "id": "jilin_hrss",
@@ -462,7 +465,8 @@
       "urlSelector": "div.list-right_title a",
       "urlAttr": "href",
       "dateSelector": "table tr td",
-      "complianceLevel": "safe"
+      "complianceLevel": "safe",
+      "notes": "海外 runner ETIMEDOUT(2026-08-20)；本地中国网络正常(12条)"
     },
     {
       "id": "ningxia_pta",
@@ -502,7 +506,8 @@
       "urlSelector": "a",
       "urlAttr": "href",
       "dateSelector": "span.time",
-      "complianceLevel": "safe"
+      "complianceLevel": "safe",
+      "notes": "海外 runner 418 WAF(2026-08-20)；本地中国网络正常(30条)"
     },
     {
       "id": "zhejiang_hrss",
