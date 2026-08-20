@@ -219,6 +219,22 @@ async function filterAnnouncements(announcements) {
       continue;
     }
 
+    // 第一级半：正文级结果公示检测 —— 标题看似招募通知但正文是"拟招募/拟录用人员名单公示"（结果公告）
+    // 案例：江苏省"三支一扶"计划招募公告（三）—— 正文通篇是名单公示，无报名指引/考试安排
+    const bodyText = (item.rawHtml || '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .replace(/当前位置.*?begin-->/g, '')
+      .slice(0, 4000);
+    const isResultAnnouncement =
+      /名单进行公示|拟(?:招募|录用|聘用).{0,20}名单|公示时间[：:]\s*\d/.test(bodyText) &&
+      !/报名(?:时间|方式|网址|入口|系统|网站|邮箱|安排)|笔试(?:时间|科目|日期|地点)|面试(?:时间|方式)|招募对象|招募数量|有关事项公告如下/.test(bodyText.slice(0, 2500));
+    if (isResultAnnouncement) {
+      console.log(`  🚫 结果公示拦截: "${title}" (正文为人员名单公示，非招募通知)`);
+      stats.blacklistRejects++;
+      continue;
+    }
+
     // 第二级：白名单 → 无负面词则通过
     const hasWhitelist = whitelist.some(keyword => title.includes(keyword));
     if (hasWhitelist) {
