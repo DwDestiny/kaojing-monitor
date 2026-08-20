@@ -13,6 +13,59 @@ import { validateData } from './core/validator.js';
 // appendFileSync/mkdirSync：用于追加 low-confidence.log（置信度审计）
 import { readFileSync, writeFileSync, appendFileSync, mkdirSync } from 'fs';
 
+const BROWSER_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/126.0 Safari/537.36';
+
+/**
+ * restricted 源日期增强：轻量抓文章页头部提取发布时间（不存正文，仅增强索引字段）
+ * 81rc 案例：列表页无日期，文章页 span 含 "2025-11-02 20:00:00"
+ */
+async function fetchArticlePublishDate(url) {
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 10000);
+    const res = await fetch(url, { signal: ctrl.signal, redirect: 'follow', headers: { 'User-Agent': BROWSER_UA, 'Accept': 'text/html' } });
+    clearTimeout(t);
+    if (!res.ok) return null;
+    const buf = await res.arrayBuffer();
+    let html = new TextDecoder('utf-8').decode(buf);
+    if (html.includes('\uFFFD')) { try { html = new TextDecoder('gbk').decode(buf); } catch { /* 保留 utf-8 */ } }
+    const text = html
+      .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+      .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/\s+/g, ' ');
+    const head = text.slice(0, 3000);
+    // 1) 显式"发布时间/发布日期"标签
+    const m1 = head.match(/发布(?:时间|日期)[:：]?\s*(20\d{2})[-/.](\d{1,2})[-/.](\d{1,2})/);
+    if (m1) return `${m1[1]}-${String(m1[2]).padStart(2, '0')}-${String(m1[3]).padStart(2, '0')}`;
+    // 2) 头部带时分秒的日期（如 span "2025-11-02 20:00:00"）
+    const m2 = head.match(/(20\d{2})[-/.](\d{1,2})[-/.](\d{1,2})\s*\d{1,2}:\d{2}/);
+    if (m2) return `${m2[1]}-${String(m2[2]).padStart(2, '0')}-${String(m2[3]).padStart(2, '0')}`;
+    // 3) 头部任意日期（YYYY-MM-DD / YYYY/MM/DD / YYYY年MM月DD日）
+    const m3 = head.match(/(20\d{2})[-/.](\d{1,2})[-/.](\d{1,2})/);
+    if (m3) return `${m3[1]}-${String(m3[2]).padStart(2, '0')}-${String(m3[3]).padStart(2, '0')}`;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+async function enhanceRestrictedDates(items, concurrency = 3) {
+  let idx = 0;
+  const runners = Array.from({ length: concurrency }, async () => {
+    while (true) {
+      const i = idx++;
+      if (i >= items.length) break;
+      const item = items[i];
+      const d = await fetchArticlePublishDate(item.url);
+      if (d) item.publishDate = d;
+      await new Promise(r => setTimeout(r, 400)); // 请求间隔，避免被源限流
+    }
+  });
+  await Promise.all(runners);
+}
+
 const WORKER_AI_BASE = 'https://kaojing-monitor.pages.dev/api/ai';
 const WORKER_API_BASE = 'https://kaojing-monitor.pages.dev';
 
@@ -410,6 +463,19 @@ export async function processData(siteConfig, options = {}) {
   console.log(`  [3/6] 爬取详情页...${isRestricted ? '（restricted 合规源：跳过详情，仅索引）' : ''}${detailInList ? '（detailInList：列表已含正文）' : ''}`);
   const withDetails = skipDetail ? newOnly : await fetchAllDetails(newOnly);
   console.log(`  ✓ 详情页处理完成（${withDetails.length} 条）`);
+
+  // 3.1 restricted 源日期增强：列表无日期（采集日兜底）时，轻量抓文章页提取发布时间——
+  // 合规约束下不存正文，但发布日是索引必需字段（军队文职 2025-11 旧公告曾因无日期逃过 6 个月过滤）
+  if (isRestricted) {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const needsDate = withDetails.filter(i => !i.publishDate || i.publishDate === todayStr);
+    if (needsDate.length > 0) {
+      console.log(`  [3.1/6] restricted 源日期增强（${needsDate.length} 条抓文章页发布时间）...`);
+      await enhanceRestrictedDates(needsDate);
+      const ok = needsDate.filter(i => i.publishDate && i.publishDate !== todayStr).length;
+      console.log(`  ✓ 日期增强完成（${ok}/${needsDate.length} 条获取到真实发布时间）`);
+    }
+  }
 
   // 3.5 兜底日期过滤（详情抓取后复查；无日期条目这里会被移除，避免脏数据）
   console.log(`  [3.5/6] 兜底日期过滤（保留 ${cutoffDate} 之后发布的）...`);
