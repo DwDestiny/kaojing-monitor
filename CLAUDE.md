@@ -11,7 +11,7 @@
 
 **线上地址**：
 - 前端：https://kaojing-monitor.pages.dev
-- API：https://kaojing-api.dangwei121105.workers.dev
+- API：https://kaojing-monitor.pages.dev/api（2026-08-20 起由 Pages Functions 提供同域 API；旧 workers.dev API 已停用——国内被 GFW 封锁）
 - 仓库：https://github.com/DwDestiny/kaojing-monitor
 
 ---
@@ -183,14 +183,20 @@ D1 里全是 NULL（线上 stats byExamType 实测 139 条全 null）
 
 ### `frontend/lib/api.ts`
 API 客户端，核心函数 `getApiBase()` 返回 API 基础 URL：
-- **浏览器环境**：硬编码返回 `https://kaojing-api.dangwei121105.workers.dev`
+- **浏览器环境**：返回空串 `""` → 同域相对路径 `/api/*`（Pages Functions 提供 API，同源免 CORS）
 - **本地开发服务端**：返回 `http://127.0.0.1:8787`
 - **不依赖环境变量**（CF Pages Dashboard 的环境变量不会注入到 `npm run build`）
+
+### `functions/`（仓库根，2026-08-20 新增）
+Cloudflare Pages Functions：12 个 API 端点文件路由（薄封装复用 `api/src/index.js` 的 handler）。
+- 约定位置：**仓库根 /functions**（Pages Git 集成按项目根查找；若放 frontend/ 下 Git 集成识别不到 → /api 404）
+- 根 `wrangler.toml`：Pages 项目 bindings（D1/AI/vars），Git 集成构建自动应用
+- 部署通道：Git 集成（push 自动构建部署），**唯一通道**（勿用 wrangler pages deploy 双通道覆盖）
+- Secrets：AI_API_TOKEN 用 `wrangler pages secret put AI_API_TOKEN --project-name=kaojing-monitor` 配置（不落 git）
 
 ### `frontend/next.config.mjs`
 Next.js 配置：
 - `output: 'export'`：静态导出模式
-- `env.NEXT_PUBLIC_API_BASE_URL`：环境变量配置（实际未生效，已改为硬编码）
 
 ### `api/wrangler.toml`
 Workers 配置：
