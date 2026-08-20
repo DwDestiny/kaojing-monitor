@@ -66,7 +66,7 @@ export default function Filter({
 
   return (
     <aside
-      className="static flex gap-space-5 overflow-x-auto lg:sticky lg:top-[120px] lg:h-fit lg:block lg:overflow-visible"
+      className="static flex gap-space-5 overflow-x-auto lg:sticky lg:top-[88px] lg:block lg:max-h-[calc(100vh-104px)] lg:overflow-y-auto lg:overflow-x-visible lg:pr-space-1"
       aria-label="筛选条件"
     >
       {/* 筛选数据加载失败提示 */}
