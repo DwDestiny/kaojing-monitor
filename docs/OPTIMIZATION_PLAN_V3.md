@@ -75,17 +75,30 @@
 | 限频 | 同样 IP 一分钟 1 次（与详情页共用限频逻辑） |
 | about 页 | 现有"提交新网站"入口改为统一跳反馈中心 |
 
-### 1.3 反馈处理后台（隐藏页 + token）
+### 1.3 反馈处理后台（隐藏页 + 口令登录）
 
-**形态**：`/admin/feedback` 隐藏页，URL 带 token（如 `/admin/feedback?token=xxx`）或 Header 校验，不做登录系统。
+**形态**：`/admin/feedback` 隐藏页，进入后先弹**口令输入框**，输对后才加载反馈数据（不用 token，好记）。
+
+**口令**：`dangwei121105`（用户约定），存服务端 env（wrangler 变量 `ADMIN_PASSWORD`），**不写死在代码**。
+
+**交互流程**：
+```
+访问 /admin/feedback
+  → 页面先显示口令输入框（不加载数据）
+  → 输入口令 → POST /api/admin/verify {password}
+  → 验证通过 → 前端 sessionStorage 存标记（刷新不用重输）
+  → 才请求 /api/admin/feedback 展示数据
+```
 
 **能力**：
 | 能力 | 说明 |
 |---|---|
+| 口令验证 | `POST /api/admin/verify`：比对 env.ADMIN_PASSWORD，通过返回 `{ok:true}` |
 | 反馈列表 | 按状态 × 类型筛选，标注来源公告标题 |
 | 一键跳转 | 从反馈直达对应公告详情页（`announcement_id` 关联） |
 | 数据修正 | 确认错误 → 更新 announcements 对应字段 → 标记 resolved |
 | 导出 | 反馈 CSV（含公告标题/时间/内容） |
+| 限频 | 口令错误 5 次锁定 10 分钟（防爆破） |
 
 ---
 
@@ -171,7 +184,7 @@ user_feedback 表（status=pending, 记录 ip/announcement_id）
 | 验证码/登录 | ❌ 不要，裸奔 |
 | 反馈粒度 | 一个备注框（≤500字），不做字段多选 |
 | 限频 | 同一 IP 一分钟 1 次 |
-| 反馈后台 | 隐藏页 `/admin/feedback` + token |
+| 反馈后台 | 隐藏页 `/admin/feedback` + **口令登录**（`dangwei121105`，存 env，不写死） |
 | 咨询助手 | ❌ 砍 |
 | 推送提醒 | ❌ 砍 |
 | 政策差异库 | ⏸ 暂缓 |
