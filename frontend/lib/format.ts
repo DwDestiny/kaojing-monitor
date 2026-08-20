@@ -12,13 +12,14 @@ export function formatRecruitCount(count: number | null | undefined): string {
   return `${formatNumber(count)} 人`;
 }
 
-/** 笔试时间：日期 + 时段；examNote='免笔试' → 无笔试；两者皆空 → 笔试时间待定 */
+/** 笔试时间：日期 + 时段；examNote 三态：'免笔试'→无笔试，'部分岗位免笔试'→部分岗位无笔试；两者皆空 → 笔试时间待定 */
 export function formatExamSchedule(
   examDate: string | null | undefined,
   examTime: string | null | undefined,
   examNote?: string | null
 ): string {
   if (examNote === "免笔试") return "无笔试";
+  if (examNote === "部分岗位免笔试") return "部分岗位无笔试";
   if (!examDate && !examTime) return "笔试时间待定";
   if (examDate && examTime) return `${examDate} ${examTime}`;
   return examDate || examTime || "笔试时间待定";

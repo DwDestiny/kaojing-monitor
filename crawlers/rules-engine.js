@@ -215,38 +215,52 @@ function autoFix(item) {
     item.examSubjects = [];
   }
 
-  // ── 规则7: examNote 免笔试（否决 + 补标，按"整条 vs 部分岗位"精细化）──
+  // ── 规则7: examNote 笔试状态（三态：免笔试 / 部分岗位免笔试 / null）──
   // 整条免笔试招聘（招聘对象全部为博士/高级/高层次，标题或正文命中）
   const WHOLESET_RE = /面向(?:博士|高级|高层次|博士研究生|具有博士|高级和博士)|公开招聘(?:博士|高级|高层次)/;
-  // 部分岗位免笔试语境
-  const PARTTIME_RE = /岗位人员|人员，可以|岗位，可以|岗位可以|岗位可|可以采取简化程序|可采取简化程序|部分|个别|其中/;
+  // 部分岗位免笔试语境（"XX岗位人员可以采取简化程序"等）
+  const PARTTIME_RE = /岗位人员|人员，可以|岗位，可以|岗位可以|岗位可|可以采取简化程序|可采取简化程序|部分|个别|其中|部分岗位/;
   let examNote = item.examNote;
   if (examNote === '免笔试') {
     // 否决：①原文存在笔试环节字样（说明有笔试）；②部分岗位语境（"XX岗位人员可以采取"，非整条免笔试）；
     // ③原文无任何免笔试依据（无"直接面试/免笔试/业务考核"等强信号）→ 考试方式未知，不得标免笔试（防 LLM 凭标题臆测）
     const hasExam = /笔试内容|笔试时间|笔试科目|笔试地点|笔试成绩|笔试工作|笔试安排|笔试(?:于|定于)|笔试环节/.test(text);
-    const noExamEvidence = /直接业务考核|简化程序直接面试|考试采取[^。]{0,20}面试|全部(?:采取|进行)[^。]{0,15}面试|免笔试|不设笔试|无需笔试|不组织笔试|不进行笔试|无笔试(?!要求)/.test(text);
-    const sig = text.match(/(简化程序直接面试|直接业务考核|免笔试|不设笔试|无笔试)/);
+    const noExamEvidence = /直接业务考核|简化程序直接面试|考试采取[^。]{0,20}面试|全部(?:采取|进行)[^。]{0,15}面试|免笔试|不设笔试|无需笔试|不组织笔试|不进行笔试|无笔试(?!要求)|试讲和答辩/.test(text);
+    const sig = text.match(/(简化程序直接面试|直接业务考核|免笔试|不设笔试|无笔试|试讲和答辩)/);
     const ctx = sig ? text.slice(Math.max(0, sig.index - 50), sig.index + 50) : text.slice(0, 120);
     const isWholeSet = WHOLESET_RE.test(item.title || '') || WHOLESET_RE.test(ctx);
     const partTime = !isWholeSet && PARTTIME_RE.test(ctx);
     if (hasExam || partTime || !noExamEvidence) {
-      changes.push(`examNote: 免笔试→null(${hasExam ? '原文有笔试环节' : partTime ? '仅部分岗位免笔试' : '原文无免笔试依据(考试方式未知)'})`);
+      changes.push(`examNote: 免笔试→${partTime ? '部分岗位免笔试' : 'null'}(${hasExam ? '原文有笔试环节' : partTime ? '仅部分岗位免笔试(降级保留信息)' : '原文无免笔试依据(考试方式未知)'})`);
+      examNote = partTime ? '部分岗位免笔试' : null;
+    }
+  } else if (examNote === '部分岗位免笔试') {
+    // 部分岗位免笔试：需要原文有"可采取/岗位可以"等部分岗位语境依据；若无依据 → 否决为 null
+    const hasPartial = /(?:岗位|人员|部分)(?:可以|可采取|可简化)|部分岗位|可以采取简化程序|可采取简化程序|个别岗位/.test(text);
+    const hasExam = /笔试内容|笔试时间|笔试科目|笔试地点|笔试成绩|笔试工作|笔试安排|笔试(?:于|定于)|笔试环节/.test(text);
+    if (!hasPartial && !hasExam) {
+      changes.push('examNote: 部分岗位免笔试→null(原文无部分岗位免笔试依据)');
       examNote = null;
     }
   } else {
-    // 补标：规则强信号（LLM 漏标时补）；WHOLESET 优先（整条免笔试招聘），其余含"岗位"语境视为部分岗位
-    const noExam = text.match(/(直接业务考核|(?:考试采取|全部|均)?简化程序直接面试[^。]{0,30}(?:面试|总成绩)|免笔试|不设笔试|无需笔试|不组织笔试|不进行笔试|无笔试(?!要求))/);
+    // 补标：原文强信号（LLM 漏标时补）；WHOLESET 优先（整条免笔试招聘），其余含"岗位"语境视为部分岗位
+    const noExam = text.match(/(直接业务考核|(?:考试采取|全部|均)?简化程序直接面试[^。]{0,30}(?:面试|总成绩)|免笔试|不设笔试|无需笔试|不组织笔试|不进行笔试|无笔试(?!要求)|试讲和答辩)/);
     if (noExam && !item.examDate) {
       const ctx = text.slice(Math.max(0, noExam.index - 50), noExam.index + 50);
       // 整条免笔试：标题含博士/高级，或原文"面向博士…招聘采取"（且非"可采取"——"可采取"=部分岗位）
       const isWholeSet = WHOLESET_RE.test(item.title || '') ||
         (WHOLESET_RE.test(ctx) && !/可采取|可以采取|可简化程序|可组织/.test(ctx));
       const partTime = !isWholeSet && /岗位|部分|个别|其中|可以|可根据/.test(ctx);
-      // 原文出现任何"笔试"字样 → 说明公告含笔试环节 → 不补标
-      if (!partTime && !/笔试/.test(ctx) && !/(笔试时间|笔试日期|笔试定于|笔试于|笔试安排|笔试另行|笔试内容)/.test(text)) {
-        changes.push('examNote: 补标免笔试(规则强信号)');
-        examNote = '免笔试';
+      const hasPen = /笔试/.test(ctx) || /(笔试时间|笔试日期|笔试定于|笔试于|笔试安排|笔试另行|笔试内容)/.test(text);
+      if (!hasPen) {
+        if (!partTime) {
+          changes.push('examNote: 补标免笔试(规则强信号)');
+          examNote = '免笔试';
+        } else {
+          // 部分岗位免笔试：有"岗位可以/可采取"语境但非整条 → 补"部分岗位免笔试"（保留信息而非否决丢失）
+          changes.push('examNote: 补标部分岗位免笔试(岗位语境)');
+          examNote = '部分岗位免笔试';
+        }
       }
     }
   }

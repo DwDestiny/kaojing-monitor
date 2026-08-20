@@ -12,7 +12,7 @@ export interface Announcement {
   examSubjects: string[];
   examType: string | null;
   examCategory: string | null;
-  /** 笔试状态说明：'免笔试'=整条公告无笔试（显示"无笔试"）；null=有笔试或未标记 */
+  /** 笔试状态说明：'免笔试'=整条公告无笔试（显示"无笔试"）；'部分岗位免笔试'=部分岗位免笔试；null=有笔试或未标记 */
   examNote?: string | null;
   publishDate: string | null;
   crawledAt: string | null;
