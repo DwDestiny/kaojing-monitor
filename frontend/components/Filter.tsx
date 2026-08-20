@@ -26,10 +26,10 @@ function FilterLink({ href, label, count, active }: FilterLinkProps) {
     <li className="mb-space-1">
       <Link
         href={href}
-        className={`relative flex items-center justify-between py-1.5 pr-space-1 text-[15px] no-underline transition-colors duration-150 ${
+        className={`relative flex items-center justify-between py-1.5 pr-space-1 text-[15px] no-underline transition-all duration-200 ease-out active:scale-[0.98] motion-reduce:transform-none ${
           active
-            ? "border-l-2 border-accent pl-space-1 font-medium text-accent"
-            : "border-l-2 border-transparent pl-space-1 font-normal text-text-secondary hover:text-accent"
+            ? "border-l-2 border-accent bg-accent-subtle pl-space-1 font-medium text-accent"
+            : "border-l-2 border-transparent pl-space-1 font-normal text-text-secondary hover:bg-accent-subtle hover:text-accent"
         }`}
         aria-current={active ? "page" : undefined}
       >

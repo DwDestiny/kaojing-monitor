@@ -158,14 +158,14 @@ export default function AnnouncementPage() {
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-[6px] bg-accent px-space-4 py-2.5 text-[14px] font-medium text-accent-contrast no-underline transition-colors duration-150 hover:bg-accent-strong"
+            className="inline-flex items-center gap-2 rounded-[6px] bg-accent px-space-4 py-2.5 text-[14px] font-medium text-accent-contrast no-underline transition-all duration-200 ease-out hover:-translate-y-px hover:bg-accent-strong active:scale-[0.98] motion-reduce:transform-none"
           >
             查看原文
             <ExternalLink className="h-4 w-4" aria-hidden />
           </a>
           <Link
             href="/"
-            className="inline-flex items-center rounded-[6px] border border-divider px-space-4 py-2.5 text-[14px] font-medium text-text-primary no-underline transition-colors duration-150 hover:border-text-tertiary hover:bg-bg-secondary"
+            className="inline-flex items-center rounded-[6px] border border-divider px-space-4 py-2.5 text-[14px] font-medium text-text-primary no-underline transition-all duration-200 ease-out hover:-translate-y-px hover:border-text-tertiary hover:bg-bg-secondary active:scale-[0.98] motion-reduce:transform-none"
           >
             返回列表
           </Link>
@@ -183,7 +183,7 @@ export default function AnnouncementPage() {
 
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="border-b border-divider px-space-3 py-space-3 md:px-space-5">
+    <div className="border-b border-divider px-space-3 py-space-3 transition-colors duration-150 hover:bg-bg-secondary md:px-space-5">
       <dt className="mb-1 text-[12px] font-semibold uppercase tracking-[0.08em] text-text-tertiary">
         {label}
       </dt>

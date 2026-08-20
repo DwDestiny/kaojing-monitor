@@ -27,7 +27,7 @@ export default function AnnouncementItem({
   } = announcement;
 
   return (
-    <article className="announcement-item">
+    <article className="announcement-item group animate-fade-up transition-all duration-200 ease-out before:absolute before:left-0 before:top-0 before:h-0 before:w-[2px] before:bg-accent before:transition-[height] before:duration-200 before:ease-out hover:-translate-y-[2px] hover:bg-bg-secondary group-hover:before:h-full active:scale-[0.99] motion-reduce:animate-none motion-reduce:transform-none motion-reduce:transition-none motion-reduce:before:transition-none">
       <div className="mb-space-2 flex items-start gap-space-2">
         <Link
           href={`/announcement?id=${id}`}

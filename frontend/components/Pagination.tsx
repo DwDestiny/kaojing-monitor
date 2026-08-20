@@ -44,13 +44,14 @@ export default function Pagination({
 
   return (
     <nav
-      className="flex justify-center gap-space-1 px-space-5 py-space-5"
+      key={page}
+      className="flex animate-fade-up justify-center gap-space-1 px-space-5 py-space-5 motion-reduce:animate-none"
       aria-label="分页"
     >
       {page > 1 ? (
         <Link
           href={makeHref(page - 1)}
-          className="px-4 py-2 text-[14px] font-medium text-text-secondary transition-colors duration-150 hover:text-accent"
+          className="rounded-[6px] px-4 py-2 text-[14px] font-medium text-text-secondary transition-colors duration-200 ease-out hover:bg-bg-secondary hover:text-accent"
           aria-label="上一页"
         >
           上一页
@@ -77,10 +78,10 @@ export default function Pagination({
             )}
             <Link
               href={makeHref(p)}
-              className={`px-4 py-2 text-[14px] font-medium transition-colors duration-150 ${
+              className={`rounded-[6px] px-4 py-2 text-[14px] font-medium transition-colors duration-200 ease-out ${
                 p === page
-                  ? "bg-accent text-accent-contrast"
-                  : "text-text-secondary hover:text-accent"
+                  ? "bg-accent text-accent-contrast hover:bg-accent-strong"
+                  : "text-text-secondary hover:bg-bg-secondary hover:text-accent"
               }`}
               aria-label={`第 ${p} 页`}
               aria-current={p === page ? "page" : undefined}
@@ -94,7 +95,7 @@ export default function Pagination({
       {page < totalPages ? (
         <Link
           href={makeHref(page + 1)}
-          className="px-4 py-2 text-[14px] font-medium text-text-secondary transition-colors duration-150 hover:text-accent"
+          className="rounded-[6px] px-4 py-2 text-[14px] font-medium text-text-secondary transition-colors duration-200 ease-out hover:bg-bg-secondary hover:text-accent"
           aria-label="下一页"
         >
           下一页

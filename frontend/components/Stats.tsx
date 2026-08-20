@@ -34,12 +34,12 @@ export default function Stats({ stats }: StatsProps) {
       {cards.map((card) => (
         <article
           key={card.label}
-          className="border-b border-divider pb-space-3 pt-space-3 lg:border-b-0"
+          className="stats-card group animate-fade-up relative border-b border-divider pb-space-3 pt-space-3 before:absolute before:inset-x-0 before:top-0 before:h-0.5 before:bg-accent before:transition-[height] before:duration-200 before:ease-out lg:border-b-0 group-hover:before:h-1 motion-reduce:animate-none motion-reduce:before:transition-none"
         >
-          <div className="border-t-2 border-accent pt-space-3 text-[12px] font-semibold uppercase tracking-[0.08em] text-text-tertiary">
+          <div className="pt-space-3 text-[12px] font-semibold uppercase tracking-[0.08em] text-text-tertiary">
             {card.label}
           </div>
-          <div className="mt-space-1 text-[40px] font-bold leading-[1.1] tracking-[-0.02em] tabular-nums text-text-primary">
+          <div className="mt-space-1 text-[40px] font-bold leading-[1.1] tracking-[-0.02em] tabular-nums text-text-primary transition-transform duration-200 ease-out group-hover:scale-105 motion-reduce:transform-none">
             {card.value}
           </div>
           <div className="mt-space-1 text-[13px] text-text-secondary">

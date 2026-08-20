@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from "react";
-import { X } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import { submitFeedback } from "@/lib/api";
 import type { SubmitFeedbackParams } from "@/types";
 
@@ -117,7 +117,7 @@ export default function FeedbackCenter({
       <button
         type="button"
         onClick={openDialog}
-        className={`inline-block no-underline transition-colors duration-150 hover:text-accent ${triggerClassName}`}
+        className={`inline-block no-underline transition-all duration-200 ease-out hover:-translate-y-px hover:text-accent active:scale-[0.98] motion-reduce:transform-none ${triggerClassName}`}
       >
         {triggerLabel}
       </button>
@@ -263,7 +263,7 @@ export default function FeedbackCenter({
                 {notice && (
                   <p
                     role="status"
-                    className={`text-[14px] ${
+                    className={`animate-fade-up text-[14px] motion-reduce:animate-none ${
                       notice.type === "success"
                         ? "text-status-note-text"
                         : "text-status-open-text"
@@ -277,9 +277,16 @@ export default function FeedbackCenter({
                 type="button"
                 onClick={handleSubmit}
                 disabled={submitting}
-                className="rounded-[6px] bg-accent px-space-5 py-3 text-[15px] font-medium text-accent-contrast transition-colors duration-150 hover:bg-accent-strong disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-[6px] bg-accent px-space-5 py-3 text-[15px] font-medium text-accent-contrast transition-all duration-200 ease-out hover:-translate-y-px hover:bg-accent-strong active:scale-[0.98] disabled:opacity-60 motion-reduce:transform-none"
               >
-                {submitting ? "提交中…" : "提交"}
+                {submitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                    提交中…
+                  </>
+                ) : (
+                  "提交"
+                )}
               </button>
             </div>
           </div>

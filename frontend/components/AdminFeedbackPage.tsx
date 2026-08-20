@@ -128,7 +128,7 @@ export default function AdminFeedbackPage() {
             type="button"
             onClick={handleVerify}
             disabled={verifying}
-            className="mt-space-4 w-full rounded-[6px] bg-accent px-space-4 py-3 text-[15px] font-medium text-accent-contrast transition-colors duration-150 hover:bg-accent-strong disabled:opacity-60"
+            className="mt-space-4 w-full rounded-[6px] bg-accent px-space-4 py-3 text-[15px] font-medium text-accent-contrast transition-all duration-200 ease-out hover:-translate-y-px hover:bg-accent-strong active:scale-[0.98] disabled:opacity-60 motion-reduce:transform-none"
           >
             {verifying ? "验证中…" : "进入"}
           </button>
@@ -172,7 +172,7 @@ export default function AdminFeedbackPage() {
                     {TYPE_LABELS[item.type] ?? item.type}
                   </span>
                   <span
-                    className={`rounded-[4px] px-2 py-0.5 text-[12px] font-medium ${
+                    className={`rounded-[4px] px-2 py-0.5 text-[12px] font-medium transition-colors duration-200 ${
                       item.status === "resolved"
                         ? "bg-status-note-subtle text-status-note-text"
                         : "bg-status-open-subtle text-status-open-text"
@@ -192,7 +192,7 @@ export default function AdminFeedbackPage() {
                   <button
                     type="button"
                     onClick={() => handleStatusChange(item.id, "resolved")}
-                    className="mt-space-3 rounded-[6px] bg-accent px-space-3 py-2 text-[13px] font-medium text-accent-contrast transition-colors duration-150 hover:bg-accent-strong"
+                    className="mt-space-3 rounded-[6px] bg-accent px-space-3 py-2 text-[13px] font-medium text-accent-contrast transition-all duration-200 ease-out hover:-translate-y-px hover:bg-accent-strong active:scale-[0.98] motion-reduce:transform-none"
                   >
                     标记已处理
                   </button>

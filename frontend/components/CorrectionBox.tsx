@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from "react";
+import { Loader2 } from "lucide-react";
 import { submitFeedback } from "@/lib/api";
 import type { ApiResult } from "@/types";
 
@@ -62,7 +63,7 @@ export default function CorrectionBox({ announcementId }: CorrectionBoxProps) {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="text-[14px] font-medium text-text-secondary no-underline transition-colors duration-150 hover:text-accent"
+          className="inline-block text-[14px] font-medium text-text-secondary no-underline transition-all duration-200 ease-out hover:-translate-y-px hover:text-accent active:scale-[0.98] motion-reduce:transform-none"
         >
           发现信息有误？反馈
         </button>
@@ -96,7 +97,7 @@ export default function CorrectionBox({ announcementId }: CorrectionBoxProps) {
                   setNotice(null);
                 }}
                 disabled={submitting}
-                className="rounded-[6px] border border-divider px-space-4 py-2 text-[14px] font-medium text-text-primary transition-colors duration-150 hover:border-text-tertiary hover:bg-bg-secondary disabled:opacity-50"
+                className="rounded-[6px] border border-divider px-space-4 py-2 text-[14px] font-medium text-text-primary transition-all duration-200 ease-out hover:-translate-y-px hover:border-text-tertiary hover:bg-bg-secondary active:scale-[0.98] disabled:opacity-50 motion-reduce:transform-none"
               >
                 取消
               </button>
@@ -104,16 +105,23 @@ export default function CorrectionBox({ announcementId }: CorrectionBoxProps) {
                 type="button"
                 onClick={handleSubmit}
                 disabled={submitting}
-                className="rounded-[6px] bg-accent px-space-4 py-2 text-[14px] font-medium text-accent-contrast transition-colors duration-150 hover:bg-accent-strong disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-[6px] bg-accent px-space-4 py-2 text-[14px] font-medium text-accent-contrast transition-all duration-200 ease-out hover:-translate-y-px hover:bg-accent-strong active:scale-[0.98] disabled:opacity-60 motion-reduce:transform-none"
               >
-                {submitting ? "提交中…" : "提交反馈"}
+                {submitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                    提交中…
+                  </>
+                ) : (
+                  "提交反馈"
+                )}
               </button>
             </div>
           </div>
           {notice && (
             <p
               role="status"
-              className={`mt-space-3 text-[14px] ${
+              className={`mt-space-3 animate-fade-up text-[14px] motion-reduce:animate-none ${
                 notice.type === "success"
                   ? "text-status-note-text"
                   : "text-status-open-text"
