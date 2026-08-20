@@ -1,12 +1,12 @@
 /**
  * 根据审计报告生成存量修复 SQL
- * 输入: /tmp/kj-audit-merged.json（审计 FAIL 明细）
+ * 输入: /tmp/kj-full-report.json（审计 FAIL 明细）
  * 输出: crawlers/output/fix-audit-20260820.sql + 校验失败清单
  * 校验: 日期格式/人数正整数/类型白名单/examNote 三态/科目数组
  */
 import { readFileSync, writeFileSync, mkdirSync } from 'fs';
 
-const report = JSON.parse(readFileSync('/tmp/kj-audit-merged.json', 'utf-8'));
+const report = JSON.parse(readFileSync('/tmp/kj-full-report.json', 'utf-8'));
 const details = report.details;
 
 const EXAM_TYPES = ['事业单位', '公务员', '教师招聘', '三支一扶', '医疗卫生', '国企招聘', '选调生', '公安辅警', '其他'];
@@ -66,6 +66,12 @@ for (const d of details) {
         rejected.push({ id, field, expected: JSON.stringify(expected), reason: 'examNote 非法值' });
         continue;
       }
+      // 安全规则：期望为 null（清空免笔试标记）的修改一律跳过待人工复核——
+      // 审计曾漏读原文（吉林 9028 原文"考试采取免笔试的方式进行"被 LLM 判"未提及免笔试"）
+      if (expected === null) {
+        rejected.push({ id, field, expected: 'null', reason: 'examNote 清空类修改需人工复核（审计有漏读案例）' });
+        continue;
+      }
       f[field] = expected;
       break;
     }
@@ -113,8 +119,10 @@ const COL_MAP = {
 const lines = [];
 const ids = Object.keys(fixes);
 for (const id of ids) {
+  const fieldEntries = Object.entries(fixes[id]);
+  if (fieldEntries.length === 0) continue; // 所有修改被安全规则跳过（如 examNote 清空类）→ 不生成空 UPDATE
   const sets = [];
-  for (const [col, val] of Object.entries(fixes[id])) {
+  for (const [col, val] of fieldEntries) {
     const dbCol = COL_MAP[col];
     if (!dbCol) {
       rejected.push({ id, field: col, expected: JSON.stringify(val), reason: '未知字段映射' });
