@@ -77,6 +77,7 @@ export default function AnnouncementPage() {
     source,
     badge,
     isKnown,
+    complianceLevel,
   } = announcement;
 
   return (
@@ -151,7 +152,14 @@ export default function AnnouncementPage() {
           <DetailRow label="考试类型" value={formatKnown(examType, isKnown)} />
           <DetailRow label="地区" value={formatKnown(region, isKnown)} />
           <DetailRow label="发布日期" value={formatKnown(publishDate, isKnown)} />
-          <DetailRow label="数据来源" value={source ?? "官方网站"} />
+          <DetailRow
+            label="数据来源"
+            value={
+              complianceLevel === "restricted"
+                ? `信息来源：${source ?? "官方网站"}（以官网为准）`
+                : (source ?? "官方网站")
+            }
+          />
           <DetailRow label="采集时间" value={formatDateTime(crawledAt)} />
         </dl>
 

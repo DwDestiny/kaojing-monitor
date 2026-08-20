@@ -400,10 +400,14 @@ export async function processData(siteConfig, options = {}) {
   const newOnly = datePrefiltered.filter(a => !existingUrlSet.has(a.url));
   console.log(`  ✓ 增量过滤: ${beforeIncremental} → ${newOnly.length} 条（跳过 ${beforeIncremental - newOnly.length} 条线上已有）`);
 
-  // 3. 爬取详情页（只抓新公告）
-  console.log('  [3/6] 爬取详情页...');
-  const withDetails = await fetchAllDetails(newOnly);
-  console.log(`  ✓ 详情页爬取完成（${withDetails.length} 条）`);
+  // 3. 爬取详情页（只抓新公告；restricted 合规源【军队文职】跳过详情——仅索引，不存正文；
+  //    detailInList 源【河北】列表 API 已含正文 articleContent，跳过详情抓取避免 SPA 壳覆盖）
+  const isRestricted = siteConfig.complianceLevel === 'restricted';
+  const detailInList = siteConfig.detailInList === true;
+  const skipDetail = isRestricted || detailInList;
+  console.log(`  [3/6] 爬取详情页...${isRestricted ? '（restricted 合规源：跳过详情，仅索引）' : ''}${detailInList ? '（detailInList：列表已含正文）' : ''}`);
+  const withDetails = skipDetail ? newOnly : await fetchAllDetails(newOnly);
+  console.log(`  ✓ 详情页处理完成（${withDetails.length} 条）`);
 
   // 3.5 兜底日期过滤（详情抓取后复查；无日期条目这里会被移除，避免脏数据）
   console.log(`  [3.5/6] 兜底日期过滤（保留 ${cutoffDate} 之后发布的）...`);
@@ -536,5 +540,8 @@ export async function processAllSites() {
   };
 }
 
-// 命令行运行
-processAllSites().catch(console.error);
+// 命令行运行（被 import 时不自动执行，防止测试/复用触发全量爬取）
+const isCli = process.argv[1] && process.argv[1].endsWith('process.js');
+if (isCli) {
+  processAllSites().catch(console.error);
+}

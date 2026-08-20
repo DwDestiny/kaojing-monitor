@@ -21,6 +21,7 @@ import {
   extractFromHtml,
   retryWithBackoff
 } from './utils.js';
+import { buildApiRequest, parseJsonItems } from './api-json.js';
 
 // 统一请求 UA：政府站 WAF 常拦截纯机器人 UA（KaoQingBot 曾触发 403/418），
 // 改用浏览器 UA 兼容（合规仍保持：低频 1-2 次/天 + 请求间隔 1-3s + 只取公开信息）
@@ -147,61 +148,80 @@ export async function crawl(siteConfig, options = {}) {
 }
 
 /**
- * API 方式爬取（江苏省）
+ * API 方式爬取（江苏 XML / 浙江 jcms JSON / 河北 rsmhapi JSON）
+ * apiType: 'xml' = 江苏 XML 响应；'json' = JSON 响应（形态 A 数组 / 形态 B HTML 字符串）
  */
 async function crawlApi(siteConfig, options) {
-  const { apiUrl, apiParams, apiType, name, region, maxPages = 1 } = siteConfig;
+  const { apiUrl, apiType, name, region, maxPages = 1 } = siteConfig;
   const pagesToCrawl = options.maxPages || maxPages;
   const results = [];
 
-  console.log(`  📡 API 模式: ${apiUrl}`);
+  console.log(`  📡 API 模式(${apiType || 'xml'}): ${apiUrl}`);
 
   for (let page = 1; page <= pagesToCrawl; page++) {
     console.log(`  📄 爬取第 ${page} 页...`);
 
-    const params = { ...apiParams, page };
-
     try {
-      const response = await retryWithBackoff(async () => {
-        return await axios.get(apiUrl, {
-          params,
-          timeout: 10000,
-          headers: {
-            'User-Agent': BROWSER_UA
-          }
-        });
-      });
-
-      // 解析 XML
-      if (apiType === 'xml') {
-        const parser = new XMLParser();
-        const data = parser.parse(response.data);
-
-        // 根据江苏省 API 结构提取数据（需根据实际返回调整）
-        const records = data?.datastore?.recordset?.record || [];
-        const items = Array.isArray(records) ? records : [records];
-
-        items.forEach(item => {
-          results.push({
-            title: item.title || '',
-            url: resolveUrl(siteConfig.baseUrl || apiUrl, item.url || ''),
-            publishDate: parseDate(item.pubdate || ''),
-            source: name,
-            region: region,
-            rawHtml: ''
+      // ── JSON 模式（浙江 jcms / 河北 rsmhapi）──
+      if (apiType === 'json') {
+        const req = buildApiRequest(siteConfig, page);
+        const response = await retryWithBackoff(async () => {
+          return await axios({
+            method: req.method,
+            url: req.url,
+            data: req.body || undefined,
+            headers: { 'User-Agent': BROWSER_UA, ...req.headers },
+            timeout: 15000,
           });
         });
 
-        console.log(`    ✓ 解析 ${items.length} 条`);
+        const json = typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
+        const items = parseJsonItems(json, siteConfig);
+        results.push(...items);
 
-        // 如果返回数据少于预期，可能已到最后一页
+        console.log(`    ✓ 解析 ${items.length} 条`);
         if (items.length === 0) {
           console.log(`  ⏹️  无更多数据，停止爬取`);
           break;
         }
+
+        if (page < pagesToCrawl) await sleep(randomDelay());
+        continue;
       }
 
-      // 请求间隔
+      // ── XML 模式（江苏 dataproxy）──
+      const params = { ...siteConfig.apiParams, page };
+      const response = await retryWithBackoff(async () => {
+        return await axios.get(apiUrl, {
+          params,
+          timeout: 10000,
+          headers: { 'User-Agent': BROWSER_UA }
+        });
+      });
+
+      const parser = new XMLParser();
+      const data = parser.parse(response.data);
+
+      const records = data?.datastore?.recordset?.record || [];
+      const items = Array.isArray(records) ? records : [records];
+
+      items.forEach(item => {
+        results.push({
+          title: item.title || '',
+          url: resolveUrl(siteConfig.baseUrl || apiUrl, item.url || ''),
+          publishDate: parseDate(item.pubdate || ''),
+          source: name,
+          region,
+          rawHtml: ''
+        });
+      });
+
+      console.log(`    ✓ 解析 ${items.length} 条`);
+      if (items.length === 0) {
+        console.log(`  ⏹️  无更多数据，停止爬取`);
+        break;
+      }
+
       if (page < pagesToCrawl) {
         await sleep(randomDelay());
       }
