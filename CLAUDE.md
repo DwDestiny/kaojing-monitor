@@ -310,6 +310,7 @@ Array.isArray(item.examSubjects) && item.examSubjects.length > 0
 
 ## 变更记录
 
+- 2026-08-20（P1 扩源，`0ffbb49`+）：数据源 8→28（25 启用）、engine 扩展（GBK/pageOffset/offset 分页/日期拼接/defaultDate）、schema 迁移 18 列+4 新表（已执行线上 D1）、合规分级（complianceLevel+Footer 免责声明）、is_known 四态；GH Actions 实测 21/25 源自动入库 68 条新数据；UA 改浏览器修复 WAF 403/418；已知限制：四川/山西/内蒙古/海南/qgsydw 5 源海外 runner 不可达（本地中国网络正常）
 - 2026-08-19 13:00：文档系统性更新——补录字段提取问题根因、历史踩坑 #2/#3/#4、爬虫文件说明
 - 2026-08-18（PR #10，`e87d30d`）：过滤系统重构——纯规则替换 AI 分类，黑名单扩充50+词
 - 2026-08-18：Wrangler 升至 v4.124.0，修复 D1 import 认证失败
