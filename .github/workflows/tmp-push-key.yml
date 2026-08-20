@@ -1,0 +1,23 @@
+# 一次性临时 workflow：把 OLLAMA_API_KEY 安全推送到 VPS（2026-08-20）
+# 用途：从 GH secret 取出 OLLAMA key → SSH 写入 VPS .env（key 经 stdin，不进命令行/日志）
+# 用后即删（本文件 + VPS_SSH_KEY/VPS_HOST secrets）
+name: TMP Push OLLAMA Key
+
+on:
+  workflow_dispatch:
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH push key via stdin
+        env:
+          VPS_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          OK: ${{ secrets.OLLAMA_API_KEY }}
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          echo "$VPS_KEY" > ~/.ssh/id_vps && chmod 600 ~/.ssh/id_vps
+          echo "$OK" | ssh -i ~/.ssh/id_vps -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=15 opsuser@${VPS_HOST} \
+            'read K; sed -i "s|^OLLAMA_API_KEY=.*|OLLAMA_API_KEY=${K}|" ~/apps/kaojing-crawler/.env; echo "--- .env 校验（值打码）---"; grep -E "^(OLLAMA_API_KEY|AI_API_TOKEN)=" ~/apps/kaojing-crawler/.env | sed -E "s/=(.{8}).*/=\1.../"'
+          echo "exit=$?"
