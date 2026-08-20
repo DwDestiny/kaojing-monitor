@@ -52,9 +52,9 @@ interface RawAnnouncement {
 }
 
 function getApiBase(): string {
-  // 生产环境：直接返回 Workers API URL
+  // 生产环境：浏览器走同域相对路径 /api/*（Pages Functions 提供 API，同源免 CORS）
   if (typeof window !== "undefined") {
-    return "https://kaojing-api.dangwei121105.workers.dev";
+    return "";
   }
 
   // 本地开发：服务端直连本地 Workers

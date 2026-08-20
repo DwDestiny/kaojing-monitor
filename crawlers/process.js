@@ -13,8 +13,8 @@ import { validateData } from './core/validator.js';
 // appendFileSync/mkdirSync：用于追加 low-confidence.log（置信度审计）
 import { readFileSync, writeFileSync, appendFileSync, mkdirSync } from 'fs';
 
-const WORKER_AI_BASE = 'https://kaojing-api.dangwei121105.workers.dev/api/ai';
-const WORKER_API_BASE = 'https://kaojing-api.dangwei121105.workers.dev';
+const WORKER_AI_BASE = 'https://kaojing-monitor.pages.dev/api/ai';
+const WORKER_API_BASE = 'https://kaojing-monitor.pages.dev';
 
 // 模块级缓存：线上已存在的公告 URL 集合（增量过滤用，一次运行只拉一次）
 let existingUrlSet = null;

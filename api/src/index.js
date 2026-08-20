@@ -136,7 +136,7 @@ export default {
  * GET /api/announcements
  * 查询公告列表，支持筛选和分页
  */
-async function getAnnouncements(request, env) {
+export async function getAnnouncements(request, env) {
   const url = new URL(request.url);
   const params = {
     region: url.searchParams.get('region'),
@@ -258,7 +258,7 @@ async function getAnnouncements(request, env) {
  * GET /api/announcements/:id
  * 获取公告详情
  */
-async function getAnnouncementById(id, env) {
+export async function getAnnouncementById(id, env) {
   const result = await env.DB.prepare(
     'SELECT * FROM announcements WHERE id = ?'
   ).bind(id).first();
@@ -298,7 +298,7 @@ async function getAnnouncementById(id, env) {
  * GET /api/stats
  * 获取统计数据
  */
-async function getStats(env) {
+export async function getStats(env) {
   // 总数
   const total = await env.DB.prepare(
     'SELECT COUNT(*) as count FROM announcements WHERE status = ?'
@@ -331,7 +331,7 @@ async function getStats(env) {
  * GET /api/regions
  * 获取地区列表
  */
-async function getRegions(env) {
+export async function getRegions(env) {
   const result = await env.DB.prepare(
     'SELECT DISTINCT region FROM announcements WHERE status = ? ORDER BY region'
   ).bind('active').all();
@@ -346,7 +346,7 @@ async function getRegions(env) {
  * 提交用户反馈（备注/纠错/建议共用）
  * 安全：IP 限频（同 IP 60 秒内 1 次）、类型/长度校验、announcement_id 绑定
  */
-async function submitFeedback(request, env) {
+export async function submitFeedback(request, env) {
   let body;
   try {
     body = await request.json();
@@ -404,7 +404,7 @@ async function submitFeedback(request, env) {
  * POST /api/admin/verify
  * 后台口令校验：口令错误 5 次锁 10 分钟（按 IP 计，模块级 Map 全局单例）
  */
-async function adminVerify(request, env) {
+export async function adminVerify(request, env) {
   const ip = getClientIp(request);
 
   // 已锁定则直接 429（即使口令正确也拒绝，第 6 次必被锁）
@@ -434,7 +434,7 @@ async function adminVerify(request, env) {
  * GET /api/admin/feedback
  * 后台反馈列表（含公告标题），需 x-admin-key 凭证
  */
-async function getAdminFeedback(request, env) {
+export async function getAdminFeedback(request, env) {
   if (!isAdminRequest(request, env)) {
     return jsonResponse({ error: 'Unauthorized' }, 401);
   }
@@ -465,7 +465,7 @@ async function getAdminFeedback(request, env) {
  * POST /api/admin/feedback/:id/status
  * 更新反馈处理状态（status 白名单校验），需 x-admin-key 凭证
  */
-async function updateFeedbackStatus(id, request, env) {
+export async function updateFeedbackStatus(id, request, env) {
   if (!isAdminRequest(request, env)) {
     return jsonResponse({ error: 'Unauthorized' }, 401);
   }
@@ -541,7 +541,7 @@ function isAdminRequest(request, env) {
  * GET /api/subjects
  * 真实科目数据源：从 announcements.exam_subjects（逗号分隔串）拆分/去重/计数/排序
  */
-async function getSubjects(env) {
+export async function getSubjects(env) {
   const result = await env.DB.prepare(
     "SELECT exam_subjects FROM announcements WHERE exam_subjects IS NOT NULL AND exam_subjects != ''"
   ).all();
@@ -677,7 +677,7 @@ function parseAiJson(text) {
  * POST /api/ai/classify
  * 判断标题+摘要是否为招考公告
  */
-async function classifyContent(request, env) {
+export async function classifyContent(request, env) {
   try {
     // 鉴权：AI 端点必须携带 Bearer token（env.AI_API_TOKEN，来自 wrangler.toml vars 或 dashboard secret，不硬编码）
     const auth = request.headers.get('Authorization') || '';
@@ -767,7 +767,7 @@ confidence 为 0-1，reason 说明判断依据（一句话）。`
  * POST /api/ai/extract
  * 从 HTML 中提取招聘人数、考试科目、日期/类型/地点等结构化字段
  */
-async function extractFields(request, env) {
+export async function extractFields(request, env) {
   try {
     // 鉴权：AI 端点必须携带 Bearer token（env.AI_API_TOKEN，来自 wrangler.toml vars 或 dashboard secret，不硬编码）
     const auth = request.headers.get('Authorization') || '';
@@ -881,7 +881,7 @@ ${truncatedHtml}`
  *                   registrationDeadline, salaryRange, publishDate, crawledAt, rawHtml,
  *                   complianceLevel? }] }
  */
-async function importAnnouncements(request, env) {
+export async function importAnnouncements(request, env) {
   // 鉴权（与 /api/ai/extract 一致）
   const auth = request.headers.get('Authorization') || '';
   if (auth !== `Bearer ${env.AI_API_TOKEN}`) return jsonResponse({ error: 'Unauthorized' }, 401);

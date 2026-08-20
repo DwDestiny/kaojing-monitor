@@ -11,13 +11,13 @@
  *
  * 环境变量：
  *   AI_API_TOKEN  必填，调用 /api/import 的 Bearer token（与 AI 提取共用）
- *   API_BASE      可选，默认 https://kaojing-api.dangwei121105.workers.dev
+ *   API_BASE      可选，默认 https://kaojing-monitor.pages.dev
  */
 
 import { readFileSync } from 'fs';
 import { autoFix } from './rules-engine.js';
 
-const API_BASE = process.env.API_BASE || 'https://kaojing-api.dangwei121105.workers.dev';
+const API_BASE = process.env.API_BASE || 'https://kaojing-monitor.pages.dev';
 const TOKEN = process.env.AI_API_TOKEN;
 const INPUT = process.env.INPUT_JSON || process.argv[2] || './output/processed-data.json';
 
