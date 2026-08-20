@@ -31,10 +31,10 @@
 
 ### 数据采集
 - **执行器**：**阿里云 VPS**（ecs-memori 47.120.20.42，Docker + cron 每天 2:30/14:30，`~/apps/kaojing-crawler/run.sh`）——2026-08-20 起替代 GitHub Actions（已停用：海外 runner 访问 gov.cn 有 5 源不可达；GH Actions crawler.yml 已 disabled）
-- **通用爬虫引擎**：`crawlers/core/engine.js`（P1 扩展：GBK 解码/pageOffset 页码偏移/offset 参数分页/日期拆分拼接/无日期兜底）
-- **网站配置**：`crawlers/config/sites.json`，**28 个源（25 启用 + 3 备用）**：山东、江苏、福建、天津、新疆(2)、北京(2)、广东、上海、重庆、贵州、湖北、湖南、河南、四川、云南、广西、山西、内蒙古、吉林、辽宁、海南、宁夏、全国事业单位招聘网等
-- **禁用源**（需 API 模式适配）：浙江（jcms JS 渲染）、河北（Vue SPA）、黑龙江（无招聘专版）
-- **翻页模式**：4 种（static-file / url-param / single / hybrid）+ pageOffset / paginationParamName / paginationStep 扩展
+- **通用爬虫引擎**：`crawlers/core/engine.js`（P1 扩展：GBK 解码/pageOffset/offset 分页/日期拼接/defaultDate；P1C 扩展：**JSON API 模式**——`core/api-json.js` 支持 jcms HTML 响应/rsmhapi JSON 数组/urlTemplate/paramJson 分页）
+- **网站配置**：`crawlers/config/sites.json`，**29 个源全部启用**：覆盖 27 省级人社厅/考试院 + 全国事业单位招聘网 + 军队人才网（restricted）
+- **特殊源**：浙江（jcms API 网关 data.html）、河北（rsmhapi JSON API，detailInList 列表含正文）、黑龙江（通知公告混发，白名单筛）、军队文职（restricted 仅索引不存正文）
+- **翻页模式**：4 种 + JSON API 分页（pageNum/pageNo/paramJson）
 - **入库**：`upload-to-d1.js` POST `https://kaojing-monitor.pages.dev/api/import`（Pages Functions，Bearer AI_API_TOKEN）
 - **VPS 环境**：CentOS 7 + Docker node:20-slim（glibc 2.17 无法跑官方 Node ≥18 二进制）；.env 存 OLLAMA_API_KEY / AI_API_TOKEN（不入库）
 
@@ -319,6 +319,7 @@ Array.isArray(item.examSubjects) && item.examSubjects.length > 0
 
 ## 变更记录
 
+- 2026-08-20（P1C 新源接入，`5080b57`）：engine JSON API 模式（浙江 jcms/河北 rsmhapi/urlTemplate/paramJson）+ 4 新源接入（浙江/河北/黑龙江/军队文职 restricted）→ 29 源全启用，线上 427 条；军队文职仅索引合规落地
 - 2026-08-20（架构迁移，`80608fb`+）：API 迁移 Cloudflare Pages Functions（12 端点同域化，根 /functions + 根 wrangler.toml）——解决 workers.dev 国内被墙；爬虫执行器迁移阿里云 VPS（Docker + cron，25 源全通）；**GH Actions crawler 停用、旧 worker kaojing-api 删除**
 - 2026-08-20（P1 扩源，`0ffbb49`+）：数据源 8→28（25 启用）、engine 扩展（GBK/pageOffset/offset 分页/日期拼接/defaultDate）、schema 迁移 18 列+4 新表（已执行线上 D1）、合规分级（complianceLevel+Footer 免责声明）、is_known 四态；GH Actions 实测 21/25 源自动入库 68 条新数据；UA 改浏览器修复 WAF 403/418；已知限制：四川/山西/内蒙古/海南/qgsydw 5 源海外 runner 不可达（本地中国网络正常）
 - 2026-08-19 13:00：文档系统性更新——补录字段提取问题根因、历史踩坑 #2/#3/#4、爬虫文件说明
