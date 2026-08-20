@@ -23,3 +23,4 @@ crawlers/output/low-confidence.log
 # 备份文件
 *.bak
 *.backup
+crawlers/scripts/research/tmp/
