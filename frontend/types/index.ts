@@ -118,3 +118,36 @@ export type AsyncState<T> =
   | { status: "loading" }
   | { status: "error"; error: string }
   | { status: "success"; data: T };
+
+/** 反馈类型（与后端 /api/feedback type 字段对齐） */
+export type FeedbackType =
+  | "new_website"
+  | "bug_report"
+  | "data_error"
+  | "feature_request"
+  | "other";
+
+/** 提交反馈参数（announcementId 详情页纠错绑定用） */
+export interface SubmitFeedbackParams {
+  type: FeedbackType;
+  content: string;
+  email?: string;
+  contact?: string;
+  announcementId?: number | null;
+}
+
+/** 后台反馈列表项（D1 snake_case 原值） */
+export interface AdminFeedbackItem {
+  id: number;
+  type: FeedbackType;
+  content: string;
+  status: string;
+  created_at: string | null;
+  announcement_id: number | null;
+  title?: string | null;
+}
+
+/** 提交类 API 的通用返回：成功 / 失败（带错误信息与状态码） */
+export type ApiResult =
+  | { ok: true }
+  | { ok: false; error: string; status?: number };

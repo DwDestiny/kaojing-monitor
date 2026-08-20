@@ -31,64 +31,55 @@ export default function AnnouncementItem({
       <div className="mb-space-2 flex items-start gap-space-2">
         <Link
           href={`/announcement?id=${id}`}
-          className="flex-1 text-[17px] font-medium leading-normal tracking-[-0.01em] text-text-primary no-underline transition-colors duration-200 hover:text-accent-peach-text"
+          className="flex-1 text-[16px] font-medium leading-normal tracking-[-0.01em] text-text-primary no-underline transition-colors duration-150 hover:text-accent"
         >
           {title}
         </Link>
         {badge === "new" && (
           <span
-            className="whitespace-nowrap bg-accent-pink px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.05em] text-accent-pink-text"
+            className="inline-flex items-center gap-1 text-[12px] font-semibold text-accent"
             aria-label="新公告"
           >
+            <span className="h-1.5 w-1.5 rounded-full bg-accent" aria-hidden />
             新
           </span>
         )}
         {badge === "hot" && (
           <span
-            className="whitespace-nowrap bg-accent-peach px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.05em] text-accent-peach-text"
+            className="inline-flex items-center gap-1 text-[12px] font-semibold text-accent"
             aria-label="热门公告"
           >
+            <span className="h-1.5 w-1.5 rounded-full bg-accent" aria-hidden />
             热
           </span>
         )}
       </div>
 
-      <div className="mb-space-2 flex flex-wrap gap-space-4 max-md:flex-col max-md:gap-space-1">
-        <div className="flex items-baseline gap-1.5 text-[14px]">
-          <span className="font-normal text-text-tertiary">招聘</span>
-          <span className="font-medium text-text-primary">
-            {formatRecruitCount(recruitCount)}
-          </span>
-        </div>
-        <div className="flex items-baseline gap-1.5 text-[14px]">
-          <span className="font-normal text-text-tertiary">笔试</span>
-          <span className="font-medium text-text-primary">
-            {formatExamSchedule(examDate, examTime, examNote)}
-          </span>
-        </div>
-        <div className="flex items-baseline gap-1.5 text-[14px]">
-          <span className="font-normal text-text-tertiary">科目</span>
-          <span className="font-medium text-text-primary">
-            {formatSubjects(examSubjects)}
-          </span>
-        </div>
-      </div>
+      <p className="mt-space-1-5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[13px] text-text-secondary">
+        <span>{region}</span>
+        <span aria-hidden>·</span>
+        <span>招聘 {formatRecruitCount(recruitCount)} 人</span>
+        <span aria-hidden>·</span>
+        <span>笔试 {formatExamSchedule(examDate, examTime, examNote)}</span>
+        <span aria-hidden>·</span>
+        <span>科目 {formatSubjects(examSubjects)}</span>
+      </p>
 
-      <div className="flex flex-wrap gap-space-1" aria-label="标签">
+      <div className="mt-space-1 flex flex-wrap gap-1.5" aria-label="标签">
         {region && (
-          <span className="bg-accent-mint px-3 py-1 text-[13px] font-medium text-accent-mint-text">
+          <span className="rounded-[4px] border border-divider bg-bg-secondary px-2 py-0.5 text-[12px] font-medium text-text-secondary">
             {region}
           </span>
         )}
         {examType && (
-          <span className="bg-accent-lemon px-3 py-1 text-[13px] font-medium text-accent-lemon-text">
+          <span className="rounded-[4px] border border-divider bg-bg-secondary px-2 py-0.5 text-[12px] font-medium text-text-secondary">
             {examType}
           </span>
         )}
         {examSubjects.map((subject) => (
           <span
             key={subject}
-            className="bg-accent-lavender px-3 py-1 text-[13px] font-medium text-accent-lavender-text"
+            className="rounded-[4px] border border-divider bg-bg-secondary px-2 py-0.5 text-[12px] font-medium text-text-secondary"
           >
             {subject.length > 4 ? subject.slice(0, 4) : subject}
           </span>

@@ -146,17 +146,17 @@ export default function HomeClient() {
           />
           <section aria-label="公告列表">
             {loading ? (
-              <div className="bg-bg-secondary px-space-5 py-space-8 text-center text-text-secondary">
+              <div className="px-space-5 py-space-8 text-center text-text-secondary">
                 加载中…
               </div>
             ) : listError ? (
               <ErrorState message={listError} />
             ) : announcements.length === 0 ? (
-              <div className="bg-bg-secondary px-space-5 py-space-8 text-center text-text-secondary">
+              <div className="px-space-5 py-space-8 text-center text-text-secondary">
                 暂无符合条件的公告
               </div>
             ) : (
-              <div className="bg-bg-secondary">
+              <div>
                 {announcements.map((item) => (
                   <AnnouncementItem key={item.id} announcement={item} />
                 ))}

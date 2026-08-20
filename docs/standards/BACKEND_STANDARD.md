@@ -139,3 +139,13 @@ export async function extractAnnouncement(item, env) {
 - [ ] AI 端点无 token 返回 401
 - [ ] 路由拆分后行为与原单文件一致（curl 对比 6 个端点）
 - [ ] 无 `console.log` 残留调试代码（允许 `console.error/warn`）
+
+## §TDD 章节（2026-08-20 追加）
+
+**强制**：任何新增/修改端点，必须先写测试（红）→ 实现（绿）→ 重构。
+
+- 测试框架：Node 内置 `node:test`（零依赖），文件放 `api/test/*.test.js`
+- 运行：`cd api && npm test`（=`node --test test/*.test.js`）
+- 用例覆盖：正常路径 / 参数校验失败(400) / 鉴权失败(401) / 限频(429) / 边界值
+- fetch handler 测试：用真实 `Request`/`Response` 构造，D1 用 mock 对象注入（`{ prepare: () => ({ bind: () => ({ run: async () => ({meta:{changes:1}}), all: async () => ({results:[]}) }) }) }`）
+- 禁止：无测试的端点合入；测试写假断言（必须断言真实行为）

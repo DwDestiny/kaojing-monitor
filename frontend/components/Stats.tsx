@@ -5,13 +5,6 @@ interface StatsProps {
   stats: StatsData;
 }
 
-const ACCENT_CLASSES = [
-  "stat-item-mint",
-  "stat-item-peach",
-  "stat-item-pink",
-  "stat-item-lemon",
-] as const;
-
 export default function Stats({ stats }: StatsProps) {
   // 只展示 /api/stats 真实返回的字段：
   // total / byRegion / byExamType（weeklyNew/upcomingExams/totalChange 后端不返回，已移除）
@@ -35,21 +28,21 @@ export default function Stats({ stats }: StatsProps) {
 
   return (
     <section
-      className="mx-auto grid max-w-content grid-cols-1 gap-space-3 px-space-3 py-space-3 sm:grid-cols-2 sm:px-space-5 sm:py-space-5 lg:grid-cols-3"
+      className="mx-auto grid max-w-content grid-cols-1 gap-x-space-3 px-space-3 py-space-3 sm:grid-cols-2 sm:px-space-5 sm:py-space-5 lg:grid-cols-3"
       aria-label="数据统计"
     >
-      {cards.map((card, index) => (
+      {cards.map((card) => (
         <article
           key={card.label}
-          className={`stat-item ${ACCENT_CLASSES[index]}`}
+          className="border-b border-divider pb-space-3 pt-space-3 lg:border-b-0"
         >
-          <div className="mb-space-1 text-[12px] font-semibold uppercase tracking-[0.08em] text-text-tertiary">
+          <div className="border-t-2 border-accent pt-space-3 text-[12px] font-semibold uppercase tracking-[0.08em] text-text-tertiary">
             {card.label}
           </div>
-          <div className="mb-1 text-[40px] font-bold tracking-[-0.02em]">
+          <div className="mt-space-1 text-[40px] font-bold leading-[1.1] tracking-[-0.02em] tabular-nums text-text-primary">
             {card.value}
           </div>
-          <div className="text-[13px] font-medium text-text-secondary">
+          <div className="mt-space-1 text-[13px] text-text-secondary">
             {card.change}
           </div>
         </article>

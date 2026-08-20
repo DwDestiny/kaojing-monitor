@@ -90,7 +90,11 @@ CREATE TABLE IF NOT EXISTS user_feedback (
   status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'processing', 'resolved', 'rejected')),
   created_at TEXT NOT NULL,
   processed_at TEXT,
-  notes TEXT
+  notes TEXT,
+  -- 2026-08-20 反馈系统扩展（T5）：
+  announcement_id INTEGER,  -- 绑定的公告 id（详情页纠错）
+  contact TEXT,             -- 联系方式（选填）
+  ip TEXT                   -- 提交者 IP（限频用）
 );
 
 CREATE INDEX IF NOT EXISTS idx_feedback_status ON user_feedback(status);

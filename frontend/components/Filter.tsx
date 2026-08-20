@@ -26,16 +26,22 @@ function FilterLink({ href, label, count, active }: FilterLinkProps) {
     <li className="mb-space-1">
       <Link
         href={href}
-        className={`flex items-center justify-between py-1.5 text-[15px] no-underline transition-colors duration-150 ${
+        className={`relative flex items-center justify-between py-1.5 pr-space-1 text-[15px] no-underline transition-colors duration-150 ${
           active
-            ? "font-medium text-text-primary"
-            : "font-normal text-text-secondary hover:text-text-primary"
+            ? "border-l-2 border-accent pl-space-1 font-medium text-accent"
+            : "border-l-2 border-transparent pl-space-1 font-normal text-text-secondary hover:text-accent"
         }`}
         aria-current={active ? "page" : undefined}
       >
         <span>{label}</span>
         {count != null && (
-          <span className="text-[13px] text-text-tertiary">{count}</span>
+          <span
+            className={`text-[13px] ${
+              active ? "text-accent" : "text-text-tertiary"
+            }`}
+          >
+            {count}
+          </span>
         )}
       </Link>
     </li>
@@ -66,7 +72,7 @@ export default function Filter({
       {/* 筛选数据加载失败提示 */}
       {error && (
         <div
-          className="mb-space-3 min-w-[160px] bg-bg-secondary px-space-3 py-space-2 text-[13px] text-text-secondary lg:mb-space-5"
+          className="mb-space-3 min-w-[160px] border border-divider px-space-3 py-space-2 text-[13px] text-text-secondary lg:mb-space-5"
           role="alert"
         >
           筛选数据加载失败：{error}

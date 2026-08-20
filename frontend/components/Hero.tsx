@@ -10,11 +10,14 @@ export default function Hero({
   const lines = title.split("\n");
 
   return (
-    <section className="bg-bg-secondary px-space-3 py-space-8 sm:px-space-5 sm:py-space-10" aria-labelledby="hero-title">
+    <section
+      className="border-b border-divider bg-bg-secondary px-space-3 py-space-8 sm:px-space-5 sm:py-space-10"
+      aria-labelledby="hero-title"
+    >
       <div className="mx-auto max-w-content">
         <h1
           id="hero-title"
-          className="mb-space-2 text-[40px] font-bold leading-[1.1] tracking-[-0.03em] sm:text-[56px]"
+          className="mb-space-2 text-[28px] font-bold leading-[1.25] tracking-[-0.02em] sm:text-[32px]"
         >
           {lines.map((line, i) => (
             <span key={i}>
@@ -23,7 +26,7 @@ export default function Hero({
             </span>
           ))}
         </h1>
-        <p className="max-w-[640px] text-[18px] font-normal text-text-secondary">
+        <p className="max-w-[640px] text-[16px] font-normal text-text-secondary">
           {subtitle}
         </p>
       </div>

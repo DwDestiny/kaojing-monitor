@@ -17,6 +17,12 @@ const EXTRACT_MODEL_FALLBACK = '@cf/meta/llama-3.1-8b-instruct-fp8-fast';
 // 反馈类型枚举（安全校验白名单）
 const FEEDBACK_TYPES = ['new_website', 'bug_report', 'data_error', 'feature_request', 'other'];
 
+// 反馈处理状态枚举（admin 更新状态的白名单）
+const FEEDBACK_STATUSES = ['pending', 'processing', 'resolved', 'rejected'];
+
+// admin 口令失败锁定：ip → { fails, lockedUntil }（Worker 全局单例，5 次错误锁 10 分钟）
+const adminLock = new Map();
+
 // /api/ai/extract 的 JSON Schema：强制模型按此结构输出，覆盖全部提取字段 + confidence + missingFields + warnings
 const EXTRACT_SCHEMA = {
   type: 'object',
@@ -57,8 +63,19 @@ export default {
           response = await getStats(env);
         } else if (url.pathname === '/api/regions' && request.method === 'GET') {
           response = await getRegions(env);
+        } else if (url.pathname === '/api/subjects' && request.method === 'GET') {
+          response = await getSubjects(env);
         } else if (url.pathname === '/api/feedback' && request.method === 'POST') {
           response = await submitFeedback(request, env);
+        } else if (url.pathname === '/api/admin/verify' && request.method === 'POST') {
+          response = await adminVerify(request, env);
+        } else if (url.pathname === '/api/admin/feedback' && request.method === 'GET') {
+          response = await getAdminFeedback(request, env);
+        } else if (url.pathname.match(/^\/api\/admin\/feedback\/\d+\/status$/) && request.method === 'POST') {
+          // 反馈状态更新：/api/admin/feedback/:id/status（id 为倒数第二段路径）
+          const segments = url.pathname.split('/');
+          const id = segments[segments.length - 2];
+          response = await updateFeedbackStatus(id, request, env);
         } else if (url.pathname === '/api/ai/classify' && request.method === 'POST') {
           response = await classifyContent(request, env);
         } else if (url.pathname === '/api/ai/extract' && request.method === 'POST') {
@@ -321,11 +338,17 @@ async function getRegions(env) {
 
 /**
  * POST /api/feedback
- * 提交用户反馈
+ * 提交用户反馈（备注/纠错/建议共用）
+ * 安全：IP 限频（同 IP 60 秒内 1 次）、类型/长度校验、announcement_id 绑定
  */
 async function submitFeedback(request, env) {
-  const body = await request.json();
-  const { type, content, email } = body;
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON body' }, 400);
+  }
+  const { type, content, email, contact, announcement_id } = body;
 
   if (!type || !content) {
     return jsonResponse({ error: 'Missing required fields' }, 400);
@@ -339,12 +362,201 @@ async function submitFeedback(request, env) {
     return jsonResponse({ error: 'Content must be a string no longer than 2000 characters' }, 400);
   }
 
-  // 插入反馈表
+  // announcement_id 若提供必须是合法整数
+  const annId = announcement_id === undefined || announcement_id === null
+    ? null
+    : Number(announcement_id);
+  if (annId !== null && !Number.isInteger(annId)) {
+    return jsonResponse({ error: 'Invalid announcement_id' }, 400);
+  }
+
+  // IP 限频：同 IP 60 秒内已有反馈记录则拒绝（防止刷屏）
+  const ip = getClientIp(request);
+  const recent = await env.DB.prepare(
+    "SELECT id FROM user_feedback WHERE ip = ? AND created_at > datetime('now','-60 seconds')"
+  ).bind(ip).first();
+  if (recent) {
+    return jsonResponse({ error: 'Too many requests, please try again later' }, 429);
+  }
+
+  // 插入反馈表（含 contact / ip / announcement_id）
   await env.DB.prepare(
-    'INSERT INTO user_feedback (type, content, email, created_at) VALUES (?, ?, ?, ?)'
-  ).bind(type, content, email || null, new Date().toISOString()).run();
+    'INSERT INTO user_feedback (type, content, email, contact, ip, announcement_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+  ).bind(
+    type,
+    content,
+    email || null,
+    contact || null,
+    ip,
+    annId,
+    new Date().toISOString()
+  ).run();
 
   return jsonResponse({ success: true });
+}
+
+/**
+ * POST /api/admin/verify
+ * 后台口令校验：口令错误 5 次锁 10 分钟（按 IP 计，模块级 Map 全局单例）
+ */
+async function adminVerify(request, env) {
+  const ip = getClientIp(request);
+
+  // 已锁定则直接 429（即使口令正确也拒绝，第 6 次必被锁）
+  if (isAdminLocked(ip)) {
+    return jsonResponse({ error: 'Too many attempts, account temporarily locked' }, 429);
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON body' }, 400);
+  }
+  const { password } = body;
+
+  if (typeof password !== 'string' || password !== env.ADMIN_PASSWORD) {
+    recordAdminFail(ip);
+    return jsonResponse({ error: 'Invalid password' }, 401);
+  }
+
+  // 校验通过：清除失败计数
+  adminLock.delete(ip);
+  return jsonResponse({ ok: true });
+}
+
+/**
+ * GET /api/admin/feedback
+ * 后台反馈列表（含公告标题），需 x-admin-key 凭证
+ */
+async function getAdminFeedback(request, env) {
+  if (!isAdminRequest(request, env)) {
+    return jsonResponse({ error: 'Unauthorized' }, 401);
+  }
+
+  const result = await env.DB.prepare(
+    'SELECT f.*, a.title FROM user_feedback f LEFT JOIN announcements a ON f.announcement_id = a.id ORDER BY f.created_at DESC'
+  ).all();
+
+  // snake_case → camelCase 映射
+  const data = result.results.map(row => ({
+    id: row.id,
+    type: row.type,
+    content: row.content,
+    status: row.status,
+    email: row.email,
+    contact: row.contact,
+    ip: row.ip,
+    announcementId: row.announcement_id,
+    title: row.title,
+    createdAt: row.created_at,
+    processedAt: row.processed_at,
+  }));
+
+  return jsonResponse({ data });
+}
+
+/**
+ * POST /api/admin/feedback/:id/status
+ * 更新反馈处理状态（status 白名单校验），需 x-admin-key 凭证
+ */
+async function updateFeedbackStatus(id, request, env) {
+  if (!isAdminRequest(request, env)) {
+    return jsonResponse({ error: 'Unauthorized' }, 401);
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON body' }, 400);
+  }
+  const { status } = body;
+  if (!FEEDBACK_STATUSES.includes(status)) {
+    return jsonResponse({ error: 'Invalid status' }, 400);
+  }
+
+  const result = await env.DB.prepare(
+    "UPDATE user_feedback SET status = ?, processed_at = datetime('now') WHERE id = ?"
+  ).bind(status, Number(id)).run();
+
+  if (!result.meta || result.meta.changes === 0) {
+    return jsonResponse({ error: 'Not found' }, 404);
+  }
+  return jsonResponse({ success: true });
+}
+
+/**
+ * 读取客户端 IP：优先 CF-Connecting-IP，回退 x-forwarded-for 第一段，再回退 'unknown'
+ */
+function getClientIp(request) {
+  const cfIp = request.headers.get('CF-Connecting-IP');
+  if (cfIp) return cfIp;
+  const forwarded = request.headers.get('x-forwarded-for') || '';
+  const first = forwarded.split(',')[0].trim();
+  return first || 'unknown';
+}
+
+/**
+ * 判断 IP 是否处于 admin 锁定状态
+ * 注意：lockedUntil=0 表示有失败计数但未锁定，不能清理，否则计数会被重置
+ */
+function isAdminLocked(ip) {
+  const now = Date.now();
+  const rec = adminLock.get(ip);
+  if (!rec || rec.lockedUntil <= 0) return false;
+  if (rec.lockedUntil > now) return true;
+  // 锁定已过期：清理计数，允许重新尝试
+  adminLock.delete(ip);
+  return false;
+}
+
+/**
+ * 记录一次口令校验失败：累计 5 次则锁 10 分钟
+ */
+function recordAdminFail(ip) {
+  const now = Date.now();
+  const rec = adminLock.get(ip) || { fails: 0, lockedUntil: 0 };
+  const fails = rec.fails + 1;
+  if (fails >= 5) {
+    adminLock.set(ip, { fails, lockedUntil: now + 10 * 60 * 1000 });
+  } else {
+    adminLock.set(ip, { fails, lockedUntil: 0 });
+  }
+}
+
+/**
+ * admin 数据接口鉴权：Header x-admin-key === env.ADMIN_PASSWORD
+ */
+function isAdminRequest(request, env) {
+  return request.headers.get('x-admin-key') === env.ADMIN_PASSWORD;
+}
+
+/**
+ * GET /api/subjects
+ * 真实科目数据源：从 announcements.exam_subjects（逗号分隔串）拆分/去重/计数/排序
+ */
+async function getSubjects(env) {
+  const result = await env.DB.prepare(
+    "SELECT exam_subjects FROM announcements WHERE exam_subjects IS NOT NULL AND exam_subjects != ''"
+  ).all();
+
+  // 聚合：拆分（逗号分隔）→ 去重 → 计数
+  const countMap = new Map();
+  for (const row of result.results) {
+    if (typeof row.exam_subjects !== 'string') continue;
+    for (const raw of row.exam_subjects.split(',')) {
+      const name = raw.trim();
+      if (!name) continue;
+      countMap.set(name, (countMap.get(name) || 0) + 1);
+    }
+  }
+
+  // 稳定排序：按名称 Unicode 码点升序
+  const data = Array.from(countMap, ([name, count]) => ({ name, count }))
+    .sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+
+  return jsonResponse({ data });
 }
 
 /**
@@ -355,7 +567,7 @@ function handleCORS() {
   return new Response(null, {
     headers: {
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-admin-key',
       'Access-Control-Max-Age': '86400'
     }
   });
@@ -755,4 +967,11 @@ async function importAnnouncements(request, env) {
     total: valid,
     message: `导入完成：新增 ${imported} 条，重复跳过 ${valid - imported} 条`
   });
+}
+
+/**
+ * 仅测试用：清空 admin 口令锁定记录（模块级 Map 单例，测试隔离用）
+ */
+export function __resetAdminLockForTest() {
+  adminLock.clear();
 }

@@ -21,6 +21,8 @@ ENVIRONMENT = "production"
 ALLOWED_ORIGINS = "https://kaojing-monitor.pages.dev"
 # 提取模型（可选；默认 qwen3.8-27b，可改回 qwen3-30b-a3b-fp8 省钱）
 EXTRACT_MODEL = "@cf/qwen/qwen3.8-27b"
+# 反馈后台口令（用户约定 dangwei121105；前端 admin 页 + /api/admin/verify 使用）
+ADMIN_PASSWORD = "dangwei121105"
 
 # Workers AI 绑定
 [ai]

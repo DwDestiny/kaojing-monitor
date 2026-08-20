@@ -11,7 +11,7 @@ export default function Footer({ lastUpdate }: FooterProps) {
 
   return (
     <footer
-      className="mt-space-10 bg-bg-secondary px-space-5 py-space-5"
+      className="mt-space-10 border-t border-divider px-space-5 py-space-5"
       role="contentinfo"
     >
       <div className="mx-auto max-w-content text-center text-[13px] text-text-tertiary">
@@ -22,7 +22,7 @@ export default function Footer({ lastUpdate }: FooterProps) {
           最后更新：{updated} ·{" "}
           <Link
             href="/about#submit"
-            className="font-medium text-text-primary no-underline hover:underline"
+            className="font-medium text-text-secondary no-underline transition-colors duration-150 hover:text-text-primary"
           >
             提交新网站
           </Link>

@@ -12,13 +12,16 @@ import {
   MOCK_SUBJECTS,
 } from "@/lib/mock-data";
 import type {
+  AdminFeedbackItem,
   Announcement,
   AnnouncementListResponse,
   AnnouncementQueryParams,
+  ApiResult,
   ExamTypeOption,
   Region,
   Stats,
   SubjectOption,
+  SubmitFeedbackParams,
 } from "@/types";
 
 const DEFAULT_PAGE_SIZE = 20;
@@ -367,6 +370,96 @@ export async function fetchSubjects(): Promise<SubjectOption[]> {
 
   const raw = result.data.data ?? [];
   return raw.map((item) => ({ name: item.name, count: item.count }));
+}
+
+/**
+ * 提交反馈（详情页纠错 / 反馈中心共用）
+ * announcementId 用于详情页纠错绑定公告；同 IP 60s 限频由后端控制（429）
+ */
+export async function submitFeedback(
+  params: SubmitFeedbackParams
+): Promise<ApiResult> {
+  const body: Record<string, string | number> = {
+    type: params.type,
+    content: params.content,
+  };
+  if (params.email) body.email = params.email;
+  if (params.contact) body.contact = params.contact;
+  if (params.announcementId != null) {
+    body.announcement_id = params.announcementId;
+  }
+
+  const result = await apiFetch<{ ok?: boolean }>("/api/feedback", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  if (!result.ok) {
+    return { ok: false, error: result.error, status: result.status };
+  }
+  return { ok: true };
+}
+
+/**
+ * 管理端口令校验
+ * 正确 → ok:true；错误 → 401；连续错误 5 次锁定 → 429
+ */
+export async function verifyAdmin(password: string): Promise<ApiResult> {
+  const result = await apiFetch<{ ok?: boolean }>("/api/admin/verify", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password }),
+  });
+
+  if (!result.ok) {
+    return { ok: false, error: result.error, status: result.status };
+  }
+  return result.data.ok === true
+    ? { ok: true }
+    : { ok: false, error: "口令验证失败" };
+}
+
+/**
+ * 拉取反馈列表（需 x-admin-key 请求头）
+ * 失败时抛错（列表是必需数据，不静默吞错）
+ */
+export async function fetchAdminFeedback(
+  adminKey: string
+): Promise<AdminFeedbackItem[]> {
+  const result = await apiFetch<{ data?: AdminFeedbackItem[] }>(
+    "/api/admin/feedback",
+    { headers: { "x-admin-key": adminKey } }
+  );
+
+  if (!result.ok) throw new Error(result.error);
+  return result.data.data ?? [];
+}
+
+/**
+ * 更新反馈处理状态
+ */
+export async function updateFeedbackStatus(
+  id: number,
+  status: string,
+  adminKey: string
+): Promise<ApiResult> {
+  const result = await apiFetch<{ ok?: boolean }>(
+    `/api/admin/feedback/${id}/status`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-key": adminKey,
+      },
+      body: JSON.stringify({ status }),
+    }
+  );
+
+  if (!result.ok) {
+    return { ok: false, error: result.error, status: result.status };
+  }
+  return { ok: true };
 }
 
 export { MOCK_STATS, MOCK_EXAM_TYPES, MOCK_SUBJECTS };

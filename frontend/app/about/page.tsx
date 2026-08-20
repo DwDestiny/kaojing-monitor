@@ -10,19 +10,19 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <>
-      <section className="bg-bg-secondary px-space-5 py-space-10 max-md:px-space-3 max-md:py-space-8">
+      <section className="border-b border-divider bg-bg-secondary px-space-5 py-space-10 max-md:px-space-3 max-md:py-space-8">
         <div className="mx-auto max-w-content">
-          <h1 className="mb-space-2 text-[48px] font-bold tracking-[-0.03em] max-md:text-[32px]">
+          <h1 className="mb-space-2 text-[28px] font-bold tracking-[-0.02em] sm:text-[32px]">
             关于考情监测
           </h1>
-          <p className="max-w-[640px] text-[18px] text-text-secondary">
+          <p className="max-w-[640px] text-[16px] text-text-secondary">
             事业单位招考信息自动化监测与展示平台，帮你从海量公告里快速找到目标考试。
           </p>
         </div>
       </section>
 
       <div className="mx-auto max-w-content px-space-5 py-space-8 max-md:px-space-3">
-        <section className="mb-space-8 bg-bg-secondary p-space-5" aria-labelledby="mission">
+        <section className="mb-space-8 pb-space-5" aria-labelledby="mission">
           <h2
             id="mission"
             className="mb-space-3 text-[12px] font-semibold uppercase tracking-[0.08em] text-text-tertiary"
@@ -31,15 +31,15 @@ export default function AboutPage() {
           </h2>
           <ul className="space-y-space-2 text-[15px] text-text-secondary">
             <li className="flex gap-space-2">
-              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 bg-accent-mint" aria-hidden />
+              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden />
               自动爬取全网招考公告，解放手动查询时间
             </li>
             <li className="flex gap-space-2">
-              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 bg-accent-peach" aria-hidden />
+              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden />
               结构化展示，支持地区 / 考试类型 / 科目筛选
             </li>
             <li className="flex gap-space-2">
-              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 bg-accent-lavender" aria-hidden />
+              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden />
               建立考情信息资产库，持续更新
             </li>
           </ul>
@@ -47,7 +47,7 @@ export default function AboutPage() {
 
         <section
           id="help"
-          className="mb-space-8 bg-bg-secondary p-space-5"
+          className="mb-space-8 pb-space-5"
           aria-labelledby="help-title"
         >
           <h2
@@ -77,7 +77,7 @@ export default function AboutPage() {
 
         <section
           id="submit"
-          className="mb-space-8 bg-bg-secondary p-space-5"
+          className="mb-space-8 pb-space-5"
           aria-labelledby="submit-title"
         >
           <h2
@@ -101,7 +101,7 @@ export default function AboutPage() {
 
         <Link
           href="/"
-          className="inline-block bg-text-primary px-space-4 py-3 text-[15px] font-medium text-bg-secondary no-underline transition-opacity hover:opacity-[0.88]"
+          className="inline-flex items-center rounded-[6px] bg-accent px-space-4 py-2.5 text-[14px] font-medium text-accent-contrast no-underline transition-colors duration-150 hover:bg-accent-strong"
         >
           返回首页查看公告
         </Link>

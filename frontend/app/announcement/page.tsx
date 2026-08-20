@@ -7,6 +7,7 @@ import { ExternalLink } from "lucide-react";
 import Footer from "@/components/Footer";
 import LoadingState from "@/components/LoadingState";
 import ErrorState from "@/components/ErrorState";
+import CorrectionBox from "@/components/CorrectionBox";
 import { fetchAnnouncementById } from "@/lib/api";
 import {
   formatDateTime,
@@ -81,7 +82,7 @@ export default function AnnouncementPage() {
       <div className="bg-bg-secondary px-space-5 py-space-8 max-md:px-space-3 max-md:py-space-5">
         <div className="mx-auto max-w-content">
           <nav className="mb-space-4 text-[14px] text-text-secondary" aria-label="面包屑">
-            <Link href="/" className="hover:text-text-primary hover:underline">
+            <Link href="/" className="transition-colors duration-150 hover:text-accent">
               首页
             </Link>
             <span className="mx-2 text-text-tertiary" aria-hidden>
@@ -91,36 +92,44 @@ export default function AnnouncementPage() {
           </nav>
 
           <div className="mb-space-3 flex flex-wrap items-start gap-space-2">
-            <h1 className="flex-1 text-[32px] font-bold leading-tight tracking-[-0.02em] max-md:text-[24px]">
+            <h1 className="flex-1 text-[28px] font-bold leading-[1.25] tracking-[-0.02em] sm:text-[32px]">
               {title}
             </h1>
             {badge === "new" && (
-              <span className="bg-accent-pink px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.05em] text-accent-pink-text">
+              <span
+                className="inline-flex items-center gap-1 text-[12px] font-semibold text-accent"
+                aria-label="新公告"
+              >
+                <span className="h-1.5 w-1.5 rounded-full bg-accent" aria-hidden />
                 新
               </span>
             )}
             {badge === "hot" && (
-              <span className="bg-accent-peach px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.05em] text-accent-peach-text">
+              <span
+                className="inline-flex items-center gap-1 text-[12px] font-semibold text-accent"
+                aria-label="热门公告"
+              >
+                <span className="h-1.5 w-1.5 rounded-full bg-accent" aria-hidden />
                 热
               </span>
             )}
           </div>
 
-          <div className="mb-space-5 flex flex-wrap gap-space-1">
+          <div className="mb-space-5 flex flex-wrap gap-1.5">
             {region && (
-              <span className="bg-accent-mint px-3 py-1 text-[13px] font-medium text-accent-mint-text">
+              <span className="rounded-[4px] border border-divider bg-bg-secondary px-2 py-0.5 text-[12px] font-medium text-text-secondary">
                 {region}
               </span>
             )}
             {examType && (
-              <span className="bg-accent-lemon px-3 py-1 text-[13px] font-medium text-accent-lemon-text">
+              <span className="rounded-[4px] border border-divider bg-bg-secondary px-2 py-0.5 text-[12px] font-medium text-text-secondary">
                 {examType}
               </span>
             )}
             {examSubjects.map((s) => (
               <span
                 key={s}
-                className="bg-accent-lavender px-3 py-1 text-[13px] font-medium text-accent-lavender-text"
+                className="rounded-[4px] border border-divider bg-bg-secondary px-2 py-0.5 text-[12px] font-medium text-text-secondary"
               >
                 {s}
               </span>
@@ -130,7 +139,7 @@ export default function AnnouncementPage() {
       </div>
 
       <div className="mx-auto max-w-content px-space-5 py-space-8 max-md:px-space-3">
-        <dl className="grid gap-0 bg-bg-secondary md:grid-cols-2">
+        <dl className="grid gap-0 md:grid-cols-2">
           <DetailRow label="招聘人数" value={formatRecruitCount(recruitCount)} />
           <DetailRow
             label="笔试时间"
@@ -149,17 +158,21 @@ export default function AnnouncementPage() {
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 bg-text-primary px-space-4 py-3 text-[15px] font-medium text-bg-secondary no-underline transition-opacity hover:opacity-[0.88]"
+            className="inline-flex items-center gap-2 rounded-[6px] bg-accent px-space-4 py-2.5 text-[14px] font-medium text-accent-contrast no-underline transition-colors duration-150 hover:bg-accent-strong"
           >
             查看原文
             <ExternalLink className="h-4 w-4" aria-hidden />
           </a>
           <Link
             href="/"
-            className="inline-flex items-center px-space-4 py-3 text-[15px] font-medium text-text-secondary no-underline transition-colors hover:bg-bg-secondary hover:text-text-primary"
+            className="inline-flex items-center rounded-[6px] border border-divider px-space-4 py-2.5 text-[14px] font-medium text-text-primary no-underline transition-colors duration-150 hover:border-text-tertiary hover:bg-bg-secondary"
           >
             返回列表
           </Link>
+        </div>
+
+        <div className="mt-space-6">
+          <CorrectionBox announcementId={announcement.id} />
         </div>
       </div>
 
@@ -170,7 +183,7 @@ export default function AnnouncementPage() {
 
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="border-b border-divider px-space-5 py-space-3">
+    <div className="border-b border-divider px-space-3 py-space-3 md:px-space-5">
       <dt className="mb-1 text-[12px] font-semibold uppercase tracking-[0.08em] text-text-tertiary">
         {label}
       </dt>

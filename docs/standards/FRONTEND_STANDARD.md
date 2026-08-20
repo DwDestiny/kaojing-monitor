@@ -115,3 +115,13 @@ useEffect(() => {
 - [ ] 所有 fetch 有 loading/error 态
 - [ ] 无 `any`、无 `@ts-ignore`
 - [ ] 颜色全部走语义 CSS 变量
+
+## §TDD 章节（2026-08-20 追加）
+
+**强制**：任何新增/修改组件或 lib 函数，必须先写测试（红）→ 实现（绿）→ 重构。
+
+- 测试框架：vitest + @testing-library/react + jsdom
+- 文件位置：`frontend/__tests__/*.test.{ts,tsx}`
+- 运行：`cd frontend && npm test`（=`vitest run`）
+- 用例覆盖：组件渲染 / 用户交互（点击/输入）/ 数据绑定 / 错误态 / sessionStorage 记忆
+- 禁止：无测试的组件合入；只测 happy path 不测错误态

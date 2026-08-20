@@ -9,8 +9,7 @@ const NAV_ITEMS = [
 export default function Header() {
   return (
     <header
-      className="sticky top-0 z-[100] border-b border-transparent backdrop-blur-sm"
-      style={{ background: "oklch(100% 0 0 / 0.92)" }}
+      className="sticky top-0 z-[100] border-b border-divider bg-bg-secondary"
       role="banner"
     >
       <div className="mx-auto flex max-w-content flex-wrap items-center justify-between gap-space-2 px-space-3 py-space-2 sm:px-space-5 sm:py-space-3 md:flex-nowrap">
@@ -30,7 +29,7 @@ export default function Header() {
             <Link
               key={item.href}
               href={item.href}
-              className="text-[15px] font-medium text-text-secondary no-underline transition-colors duration-200 ease-smooth hover:text-text-primary"
+              className="text-[15px] font-medium text-text-secondary no-underline transition-colors duration-150 hover:text-accent"
             >
               {item.label}
             </Link>
@@ -39,7 +38,7 @@ export default function Header() {
 
         <Link
           href="/about#submit"
-          className="inline-block bg-text-primary px-space-3 py-[10px] text-[14px] font-medium text-bg-secondary no-underline transition-opacity duration-200 hover:opacity-[0.88]"
+          className="inline-flex items-center rounded-[6px] bg-accent px-space-3 py-2.5 text-[14px] font-medium text-accent-contrast no-underline transition-colors duration-150 hover:bg-accent-strong"
         >
           提交新网站
         </Link>

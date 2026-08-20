@@ -3,28 +3,52 @@
 @tailwind utilities;
 
 :root {
-  /* 基础色彩 - OKLCH */
-  --bg-primary: oklch(98% 0 0);
-  --bg-secondary: oklch(100% 0 0);
-  --text-primary: oklch(25% 0 0);
-  --text-secondary: oklch(55% 0 0);
-  --text-tertiary: oklch(72% 0 0);
-  --divider: oklch(94% 0 0);
+  /* ===== 中性色（近白底 / 深墨字，编辑出版感）===== */
+  --bg-primary: oklch(99% 0.003 95);
+  --bg-secondary: oklch(97.2% 0.004 95);
+  --text-primary: oklch(24% 0.012 275);
+  --text-secondary: oklch(45% 0.01 275);
+  --text-tertiary: oklch(62% 0.01 275);
+  --divider: oklch(91.5% 0.005 90);
 
-  /* 马卡龙活力色 - OKLCH */
-  --accent-mint: oklch(88% 0.08 165);
-  --accent-mint-text: oklch(58% 0.12 165);
-  --accent-peach: oklch(88% 0.08 55);
-  --accent-peach-text: oklch(68% 0.14 55);
-  --accent-pink: oklch(88% 0.1 5);
-  --accent-pink-text: oklch(68% 0.16 5);
-  --accent-lemon: oklch(94% 0.08 95);
-  --accent-lemon-text: oklch(65% 0.12 85);
-  --accent-lavender: oklch(88% 0.08 290);
-  --accent-lavender-text: oklch(58% 0.14 290);
+  /* ===== 品牌强调色（唯一强调色：墨绿）===== */
+  --accent: oklch(40% 0.07 168);
+  --accent-strong: oklch(34% 0.065 168);
+  --accent-subtle: oklch(94% 0.02 168);
+  --accent-subtle-text: oklch(36% 0.07 168);
+  --accent-contrast: oklch(99% 0 0);
 
-  /* 间距系统 8pt */
+  /* ===== 状态色（克制使用，只出现在状态徽标）===== */
+  --status-open: oklch(55% 0.19 27);
+  --status-open-subtle: oklch(95% 0.02 27);
+  --status-open-text: oklch(48% 0.17 27);
+  --status-closed: oklch(58% 0.01 275);
+  --status-closed-subtle: oklch(94% 0.004 275);
+  --status-closed-text: oklch(48% 0.01 275);
+  --status-note: oklch(62% 0.13 152);
+  --status-note-subtle: oklch(95% 0.02 152);
+  --status-note-text: oklch(45% 0.11 152);
+
+  /* ===== 旧马卡龙 → 迁移别名（组件未改类名前自动退化，见 §2.5）===== */
+  --accent-mint: oklch(94% 0.02 168);
+  --accent-mint-text: oklch(36% 0.07 168);
+  --accent-peach: oklch(95% 0.004 90);
+  --accent-peach-text: oklch(40% 0.01 275);
+  --accent-pink: oklch(95% 0.02 27);
+  --accent-pink-text: oklch(48% 0.17 27);
+  --accent-lemon: oklch(95% 0.004 90);
+  --accent-lemon-text: oklch(40% 0.01 275);
+  --accent-lavender: oklch(95% 0.004 90);
+  --accent-lavender-text: oklch(40% 0.01 275);
+
+  /* ===== 字体栈（中文系统字体优先）===== */
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro SC", "PingFang SC",
+    "Hiragino Sans GB", "Noto Sans SC", "Source Han Sans SC", "Microsoft YaHei",
+    "Segoe UI", Roboto, sans-serif;
+
+  /* ===== 间距系统 8pt（新增半格）===== */
   --space-1: 8px;
+  --space-1-5: 12px;
   --space-2: 16px;
   --space-3: 24px;
   --space-4: 32px;
@@ -33,8 +57,10 @@
   --space-8: 64px;
   --space-10: 80px;
 
-  /* 圆角：方形设计 */
-  --radius: 0px;
+  /* ===== 圆角：微圆角 4-8px ===== */
+  --radius-sm: 4px;
+  --radius: 6px;
+  --radius-lg: 8px;
 }
 
 @layer base {
@@ -59,43 +85,7 @@
 }
 
 @layer components {
-  /* Stats 左边框色条 */
-  .stat-item {
-    @apply relative bg-bg-secondary px-space-3 py-space-4 transition-transform duration-200 ease-smooth;
-  }
-
-  .stat-item::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 4px;
-    transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .stat-item-mint::before {
-    background: var(--accent-mint);
-  }
-  .stat-item-peach::before {
-    background: var(--accent-peach);
-  }
-  .stat-item-pink::before {
-    background: var(--accent-pink);
-  }
-  .stat-item-lemon::before {
-    background: var(--accent-lemon);
-  }
-
-  .stat-item:hover {
-    transform: translateX(4px);
-  }
-
-  .stat-item:hover::before {
-    width: 6px;
-  }
-
-  /* 公告卡片左边框展开 */
+  /* 公告列表项：仅靠底部 1px 细线分隔（报纸目录感），hover 只变标题色 */
   .announcement-item {
     @apply relative px-space-5 py-space-4 transition-colors duration-150;
   }
@@ -112,25 +102,6 @@
 
   .announcement-item:last-of-type::after {
     display: none;
-  }
-
-  .announcement-item::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 0;
-    background: var(--text-primary);
-    transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .announcement-item:hover {
-    background: var(--bg-primary);
-  }
-
-  .announcement-item:hover::before {
-    width: 3px;
   }
 
   @media (max-width: 768px) {

@@ -50,7 +50,7 @@ export default function Pagination({
       {page > 1 ? (
         <Link
           href={makeHref(page - 1)}
-          className="px-4 py-2 text-[14px] font-medium text-text-secondary transition-all duration-150 hover:bg-bg-primary hover:text-text-primary"
+          className="px-4 py-2 text-[14px] font-medium text-text-secondary transition-colors duration-150 hover:text-accent"
           aria-label="上一页"
         >
           上一页
@@ -77,10 +77,10 @@ export default function Pagination({
             )}
             <Link
               href={makeHref(p)}
-              className={`px-4 py-2 text-[14px] font-medium transition-all duration-150 ${
+              className={`px-4 py-2 text-[14px] font-medium transition-colors duration-150 ${
                 p === page
-                  ? "bg-text-primary text-bg-secondary"
-                  : "text-text-secondary hover:bg-bg-primary hover:text-text-primary"
+                  ? "bg-accent text-accent-contrast"
+                  : "text-text-secondary hover:text-accent"
               }`}
               aria-label={`第 ${p} 页`}
               aria-current={p === page ? "page" : undefined}
@@ -94,7 +94,7 @@ export default function Pagination({
       {page < totalPages ? (
         <Link
           href={makeHref(page + 1)}
-          className="px-4 py-2 text-[14px] font-medium text-text-secondary transition-all duration-150 hover:bg-bg-primary hover:text-text-primary"
+          className="px-4 py-2 text-[14px] font-medium text-text-secondary transition-colors duration-150 hover:text-accent"
           aria-label="下一页"
         >
           下一页
