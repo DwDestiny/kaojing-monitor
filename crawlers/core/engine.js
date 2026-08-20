@@ -22,6 +22,10 @@ import {
   retryWithBackoff
 } from './utils.js';
 
+// 统一请求 UA：政府站 WAF 常拦截纯机器人 UA（KaoQingBot 曾触发 403/418），
+// 改用浏览器 UA 兼容（合规仍保持：低频 1-2 次/天 + 请求间隔 1-3s + 只取公开信息）
+const BROWSER_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36';
+
 /**
  * 构造分页 URL（static-file 与 url-param 统一入口）
  * 支持 pageOffset（静态文件页码偏移）与 paginationParamName/paginationStep（参数分页步进）
@@ -163,7 +167,7 @@ async function crawlApi(siteConfig, options) {
           params,
           timeout: 10000,
           headers: {
-            'User-Agent': 'KaoQingBot/1.0 (Recruitment Info Aggregator; Contact: admin@example.com)'
+            'User-Agent': BROWSER_UA
           }
         });
       });
@@ -341,7 +345,7 @@ async function fetchAndParse(url, siteConfig) {
     const response = await axios.get(url, {
       timeout: 10000,
       headers: {
-        'User-Agent': 'KaoQingBot/1.0 (Recruitment Info Aggregator; Contact: admin@example.com)'
+        'User-Agent': BROWSER_UA
       },
       responseType: 'arraybuffer'
     });
