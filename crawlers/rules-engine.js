@@ -273,21 +273,65 @@ function autoFix(item) {
   }
   item.examNote = examNote;
 
-  // ── 规则7.5: examTime 语境校验——咨询时间/报名时间不是笔试时间（LLM 幻觉修复）──
-  // 案例：浙江"咨询时间：工作日上午9:00-11:30"→LLM 提取成考试时间；吉林"报名时间…9:00-16:00"同样
+  // ── 规则7.5: examTime 语境校验——咨询/报名/技术支持/监督电话等时间不是笔试时间（LLM 幻觉修复）──
+  // 案例：浙江"咨询时间：工作日上午9:00-11:30"→LLM 提取成考试时间；吉林"报名时间…9:00-16:00"；
+  //       "技术支持电话：工作日9:00-12:00"；"监督电话工作时间（工作日8:00-11:30）"；"资格初审陈述申辩时间"
   if (item.examTime) {
     const et = String(item.examTime);
     const etEscaped = et.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    // 该时段紧邻"咨询时间/报名时间"字样（同句或近邻）→ 非笔试时间
-    const ctxRe = new RegExp(`(咨询时间|报名时间)[^。；;]{0,80}${etEscaped}`, 'i');
-    if (ctxRe.test(text)) {
-      changes.push(`examTime: ${et}→null(咨询/报名时间非笔试)`);
+    // 该时段紧邻非笔试语境词（同句或近邻 80 字符）→ 非笔试时间
+    const ctxRe = new RegExp(`(咨询时间|报名时间|报名时段|技术支持|监督电话|资格初审|陈述申辩|申诉时间|缴费时间|资格审核时间|打印准考证[^。]{0,20}时间)[^。；;]{0,80}${etEscaped}`, 'i');
+    // 反向模式：时段在前、"咨询/报名"等字样在后（"9:00-16:00 报名"）
+    const ctxReRev = new RegExp(`${etEscaped}[^。；;]{0,50}(咨询时间|报名时间|报名截止|技术支持|监督电话)`, 'i');
+    if (ctxRe.test(text) || ctxReRev.test(text)) {
+      changes.push(`examTime: ${et}→null(咨询/报名/技术支持等时间非笔试)`);
       item.examTime = null;
     }
     // 整条免笔试的公告不可能有笔试时间
     if (item.examNote === '免笔试' && item.examTime) {
       changes.push(`examTime: ${item.examTime}→null(免笔试无笔试时间)`);
       item.examTime = null;
+    }
+  }
+
+  // ── 规则9: examType 主体细分——医院→医疗卫生、学校→教师招聘（LLM 常把医院/学校招聘标成事业单位）──
+  // 审计实证（2026-08-20 全量审计 75 条）：南方医科大学医院/山东第一医科大学附院/山东师范大学附属中学等
+  // 全部被标"事业单位"。细分规则：标题/正文主体命中医院类词→医疗卫生；学校类词→教师招聘。
+  // 注意：标题为泛称统考（"市属事业单位公开招聘"等，非单一主体）不细分，避免误伤统考里的事业单位岗位。
+  const examTypeRule = (item) => {
+    const cur = item.examType;
+    if (cur !== '事业单位' && cur !== null && cur !== undefined) return; // 已细分的不动
+    const head = (item.title || '') + ' ' + (text || '').slice(0, 600);
+    // 泛称统考/多单位合集：不细分
+    if (/(统考|全省统一|全市统一|市属事业单位|省属事业单位|州属事业单位|县属事业单位|事业单位公开招聘工作人员公告|公共科目笔试统一)/.test(head)) {
+      return;
+    }
+    const hospitalRe = /医院|卫生院|疾控中心|疾病预防控制|妇幼保健|医疗集团|人民医院|中医院|中西医结合医院|康复医院|卫生(健康|学校|中心|局|委员会)(下属|直属)?(?:事业单位)?/;
+    const schoolRe = /大学|学院|中学|小学|幼儿园|师范(?:大学|学院|学校)|教育局|教育体育局|技工学校|技师学院|职业中学|中等职业|附属中学/;
+    if (hospitalRe.test(head)) {
+      item.examType = '医疗卫生';
+      if (cur !== '医疗卫生') changes.push(`examType: ${cur ?? 'null'}→医疗卫生(医院主体细分)`);
+    } else if (schoolRe.test(head) && !/医院/.test(head)) {
+      item.examType = '教师招聘';
+      if (cur !== '教师招聘') changes.push(`examType: ${cur ?? 'null'}→教师招聘(学校主体细分)`);
+    }
+  };
+  examTypeRule(item);
+
+  // ── 规则10: publishDate 落款兜底——列表页无日期（defaultDate 采集日）时，用详情页落款日期替代 ──
+  // 审计实证（2026-08-20 全量审计 101 条）：四川/新疆系列源列表无日期，publishDate 被兜底成采集日(2026-08-20)，
+  // 但原文落款是 2026-03-27~31。影响：前端排序/增量过滤窗口全错。
+  const todayStr = new Date().toISOString().slice(0, 10);
+  if (!item.publishDate || item.publishDate === todayStr) {
+    // 正文尾部落款模式："……四川省人力资源和社会保障厅 2026年3月27日" / "XX局 2026年3月31日"
+    const m = (text || '').match(/([\u4e00-\u9fa5A-Za-z0-9]{2,24}?(?:办公厅|办公室|委员会|局|厅|部|中心|院|校|处|办))\s*(20\d{2})年(\d{1,2})月(\d{1,2})日/);
+    if (m) {
+      const fallback = `${m[2]}-${String(m[3]).padStart(2, '0')}-${String(m[4]).padStart(2, '0')}`;
+      // 落款日期应早于等于今天，且晚于公告所在年份年初（合理性）
+      if (fallback <= todayStr && fallback >= `${m[2]}-01-01`) {
+        changes.push(`publishDate: ${item.publishDate ?? 'null'}→${fallback}(详情页落款日期)`);
+        item.publishDate = fallback;
+      }
     }
   }
 
