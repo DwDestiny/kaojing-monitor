@@ -375,33 +375,44 @@ export async function processData(siteConfig, options = {}) {
     `  ✓ 过滤后 ${filtered.length} 条（黑名单拒绝 ${filterStats.blacklistRejects}，白名单通过 ${filterStats.whitelistPasses}，无白名单拒绝 ${filterStats.noWhitelistRejects}）`
   );
 
-  // 3. 爬取详情页
-  console.log('  [3/6] 爬取详情页...');
-  const withDetails = await fetchAllDetails(filtered);
-  console.log(`  ✓ 详情页爬取完成`);
-
-  // 日期过滤：只保留最近 6 个月内的公告
+  // 日期阈值：只保留最近 6 个月内的公告（列表级预过滤，节省详情抓取）
   const sixMonthsAgo = new Date();
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
   const cutoffDate = sixMonthsAgo.toISOString().split('T')[0]; // 'YYYY-MM-DD'
 
-  console.log(`  [3.5/6] 过滤旧公告（保留 ${cutoffDate} 之后发布的）...`);
-  const beforeFilter = withDetails.length;
-  let recentAnnouncements = withDetails.filter(item => {
+  // 2.5 列表日期预过滤（>6 个月的旧公告不抓详情；无日期的条目保留，详情后兜底过滤）
+  console.log(`  [2.5/6] 列表日期预过滤（保留 ${cutoffDate} 之后发布的）...`);
+  const beforeDateFilter = filtered.length;
+  const datePrefiltered = filtered.filter(item => {
     const pubDate = item.publishDate; // 'YYYY-MM-DD' 格式
-    return pubDate && pubDate >= cutoffDate;
+    if (!pubDate) return true; // 无日期不预过滤（避免误杀四川 defaultDate=today 之外的缺失源）
+    return pubDate >= cutoffDate;
   });
-  console.log(`  ✓ 已过滤: ${beforeFilter} → ${recentAnnouncements.length} 条（移除 ${beforeFilter - recentAnnouncements.length} 条旧公告）`);
+  console.log(`  ✓ 预过滤: ${beforeDateFilter} → ${datePrefiltered.length} 条（跳过 ${beforeDateFilter - datePrefiltered.length} 条旧公告）`);
 
-  // 3.5 增量过滤：跳过线上已存在的公告（避免对存量数据重复调 AI，节省 Workers AI 额度）
-  console.log('  [3.6/6] 增量过滤（跳过线上已有公告）...');
+  // 2.7 增量过滤提前：跳过线上已存在的公告（只对"新公告"抓详情 + 调 AI，大幅减少详情抓取量与 LLM 额度）
+  console.log('  [2.7/6] 增量过滤提前（跳过线上已有公告）...');
   if (existingUrlSet === null) {
     existingUrlSet = await fetchExistingUrls();
     console.log(`  ✓ 线上已有 ${existingUrlSet.size} 条公告 URL`);
   }
-  const beforeIncremental = recentAnnouncements.length;
-  recentAnnouncements = recentAnnouncements.filter(a => !existingUrlSet.has(a.url));
-  console.log(`  ✓ 增量过滤: ${beforeIncremental} → ${recentAnnouncements.length} 条（跳过 ${beforeIncremental - recentAnnouncements.length} 条线上已有）`);
+  const beforeIncremental = datePrefiltered.length;
+  const newOnly = datePrefiltered.filter(a => !existingUrlSet.has(a.url));
+  console.log(`  ✓ 增量过滤: ${beforeIncremental} → ${newOnly.length} 条（跳过 ${beforeIncremental - newOnly.length} 条线上已有）`);
+
+  // 3. 爬取详情页（只抓新公告）
+  console.log('  [3/6] 爬取详情页...');
+  const withDetails = await fetchAllDetails(newOnly);
+  console.log(`  ✓ 详情页爬取完成（${withDetails.length} 条）`);
+
+  // 3.5 兜底日期过滤（详情抓取后复查；无日期条目这里会被移除，避免脏数据）
+  console.log(`  [3.5/6] 兜底日期过滤（保留 ${cutoffDate} 之后发布的）...`);
+  const beforeFilter = withDetails.length;
+  const recentAnnouncements = withDetails.filter(item => {
+    const pubDate = item.publishDate;
+    return pubDate && pubDate >= cutoffDate;
+  });
+  console.log(`  ✓ 已过滤: ${beforeFilter} → ${recentAnnouncements.length} 条（移除 ${beforeFilter - recentAnnouncements.length} 条）`);
 
   // 4. AI 优先字段提取（失败则规则兜底）
   console.log('  [4/6] 提取字段...');
