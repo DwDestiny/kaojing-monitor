@@ -1,11 +1,26 @@
+# Cloudflare Pages 项目配置（2026-08-20 API 迁移 Pages Functions）
+# 本文件在仓库根：Git 集成（push 自动构建）读取它配置 bindings + 构建产物目录
+# functions/ 目录在仓库根（Cloudflare Pages 约定位置）
+# Secrets（AI_API_TOKEN）不落 git，用 `wrangler pages secret put AI_API_TOKEN` 配置
 name = "kaojing-monitor"
+compatibility_date = "2024-01-01"
 pages_build_output_dir = "frontend/out"
-compatibility_date = "2026-08-17"
 
-# 注意：[vars] 里的环境变量只在运行时（Pages Functions）可用，
-# 不会注入到构建阶段（npm run build）。
-# Next.js 的 NEXT_PUBLIC_* 变量需要在构建时被打包进静态 JS，
-# 所以必须在 Cloudflare Pages Dashboard 的 Environment variables 里设置，
-# 不能只放在这个文件里。
+# D1 数据库（与 api/wrangler.toml 同一数据库）
+[[d1_databases]]
+binding = "DB"
+database_name = "kaojing-db"
+database_id = "6ddc90cf-ea1b-4b67-b095-7d545b8fb851"
+
+# Workers AI（/api/ai/extract、/api/ai/classify 用；主提取链路为 Ollama Cloud 直连）
+[ai]
+binding = "AI"
+
 [vars]
 ENVIRONMENT = "production"
+# CORS 白名单（同域调用时浏览器不发 CORS 预检，保留以防跨域访问）
+ALLOWED_ORIGINS = "https://kaojing-monitor.pages.dev"
+# 提取模型（/api/ai/extract 默认模型）
+EXTRACT_MODEL = "@cf/qwen/qwen3.8-27b"
+# 反馈后台口令（用户约定 dangwei121105）
+ADMIN_PASSWORD = "dangwei121105"
