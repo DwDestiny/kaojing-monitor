@@ -94,8 +94,16 @@ async function main() {
   const data = JSON.parse(readFileSync('./output/cleaned-data.json', 'utf-8'));
   console.log(`LLM 逐条审计 ${data.length} 条（并发 5）...`);
 
-  const results = await runConcurrent(data, 5, async (item, i) => {
-    const verdict = await auditOne(item);
+  const results = await runConcurrent(data, 3, async (item, i) => {
+    // 调用级重试（限流/超时兜底）
+    let verdict;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try { verdict = await auditOne(item); break; }
+      catch (e) {
+        if (attempt === 2) throw e;
+        await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
+      }
+    }
     if (i % 20 === 0) console.log(`  ... ${i}/${data.length}`);
     return { title: item.title, url: item.url, verdict };
   });
