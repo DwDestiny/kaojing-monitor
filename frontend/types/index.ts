@@ -19,6 +19,10 @@ export interface Announcement {
   source?: string | null;
   /** 展示用徽章：新 / 热 */
   badge?: "new" | "hot" | null;
+  /** P1（2026-08-20）：合规级别 safe/attribution/restricted（受限源不展示正文） */
+  complianceLevel?: string | null;
+  /** P1：缺失值语义 known/unknown/na/none（unknown→灰"待确认"；na→"不适用"） */
+  isKnown?: string | null;
 }
 
 /** 统计卡片 */

@@ -266,6 +266,19 @@ function autoFix(item) {
   }
   item.examNote = examNote;
 
+  // ── 规则8: is_known 缺失值语义（known/unknown/na/none，记录级）──
+  // known  = 关键字段（笔试日期/报名截止/人数/科目）全部有值
+  // unknown= 关键字段有缺失（原文未公布，前端显示"待确认"）
+  // na     = 整条免笔试（笔试日期不适用，非缺失）
+  // none   = 保留语义（明确"无"的场景，当前提取链路不产生，留给未来字段级标记）
+  const has = (v) => v !== null && v !== undefined && v !== '' && !(Array.isArray(v) && v.length === 0);
+  if (item.examNote === '免笔试') {
+    item.is_known = 'na';
+  } else {
+    const keys = [item.examDate, item.registrationDeadline, item.recruitCount, item.examSubjects];
+    item.is_known = keys.every(has) ? 'known' : 'unknown';
+  }
+
   return changes;
 }
 

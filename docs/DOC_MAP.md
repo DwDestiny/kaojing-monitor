@@ -3,7 +3,7 @@
 > **GEB 原则**：文档是团队的共享记忆。每个主题一份权威文档，其他文档只引用不复制。开发前先查地图定位权威来源，禁止凭记忆或猜测写代码。
 > **维护**：新增/修改文档必须在此登记。本文件是项目文档的唯一索引。
 
-**最后更新**：2026-08-19 15:00
+**最后更新**：2026-08-20 13:30
 
 ---
 
@@ -18,8 +18,8 @@
 | `docs/standards/BACKEND_STANDARD.md` | **后端开发规范（强制）** | 写 `api/` 代码前必读 | ✅ 2026-08-19 |
 | `docs/standards/FRONTEND_STANDARD.md` | **前端开发规范（强制）** | 写 `frontend/` 代码前必读 | ✅ 2026-08-19 |
 | `docs/standards/DATABASE_STANDARD.md` | **数据库规范（强制）** | 写 schema/导入 SQL 前必读 | ✅ 2026-08-19 |
-| `database/schema-d1.sql` | D1 表结构唯一权威（全量建表） | 涉及 DB 结构时读 | ⚠️ 待迁移扩展 |
-| `database/migrations/` | 增量迁移（新增） | 改已有表结构时读 | 📌 待创建 |
+| `database/schema-d1.sql` | D1 表结构唯一权威（全量建表） | 涉及 DB 结构时读 | ✅ 2026-08-20 P1 扩展（18 列+4 表） |
+| `database/migrations/` | 增量迁移（新增） | 改已有表结构时读 | ✅ 20260820_schema_extend.sql 已执行 |
 
 ---
 
@@ -68,6 +68,7 @@
 | `crawler/website-analysis-report.md` | 网站调研报告 | ✅ 参考 |
 | `recruit-websites-list.md` | 网站清单 | ✅ 参考 |
 | `PROGRESS.md` / `STATUS.md` | 进度/状态 | ⚠️ 08-17 冻结 |
+| `crawlers/scripts/research/` | P1 扩源调研产出（子代理实测，group-*.json） | ✅ 2026-08-20 |
 
 ### 交付报告（根目录，3）
 | 文档 | 主题 | 状态 |
@@ -91,3 +92,4 @@
 ## 🔧 维护记录
 
 - 2026-08-19 15:00：创建文档地图；登记规范三件套、MASTER_UPGRADE_PLAN、REQUIREMENTS_V2；标记过时文档
+- 2026-08-20 13:30：P1 扩源完成——sites.json 8→28 源（25 启用）、engine 扩展（GBK/pageOffset/offset 分页/日期拼接）、schema 迁移 18 列+4 新表已执行线上 D1、合规分级（complianceLevel）+ is_known 四态落地；调研产出登记 crawlers/scripts/research/

@@ -1,0 +1,346 @@
+[
+  {
+    "id": "shanghai_hrss",
+    "name": "上海市人力资源和社会保障局",
+    "region": "上海",
+    "ok": true,
+    "columnText": "事业单位招聘",
+    "columnUrl": "https://rsj.sh.gov.cn/tsydwgkzp_17406/index.html",
+    "pageTitle": "事业单位公开招聘",
+    "container": "ul.uli14.nowrapli.list-date.no-margin-bottom",
+    "itemCount": 16,
+    "hasDate": true,
+    "firstItem": {
+      "text": "上海市儿童医院工作人员公开招聘公告",
+      "title": "上海市儿童医院工作人员公开招聘公告",
+      "href": "/tzpgg_17408/20260819/t0035_1443195.html",
+      "dateSelector": "span.time"
+    },
+    "pagination": null,
+    "sampleHtml": "<li> <a href=\"/tzpgg_17408/20260819/t0035_1443195.html\" target=\"_blank\" title=\"上海市儿童医院工作人员公开招聘公告\"> 上海市儿童医院工作人员公开招聘公告 </a> <span class=\"time\">2026-08-19</span></li>"
+  },
+  {
+    "id": "zhejiang_hrss",
+    "name": "浙江省人力资源和社会保障厅",
+    "region": "浙江",
+    "ok": true,
+    "columnText": "公示公告",
+    "columnUrl": "https://rlsbt.zj.gov.cn/col/col1229116948/index.html",
+    "pageTitle": "重要公告",
+    "container": "table",
+    "itemCount": 5,
+    "hasDate": false,
+    "firstItem": {
+      "text": "首页",
+      "title": "",
+      "href": "/index.html",
+      "dateSelector": null
+    },
+    "pagination": null,
+    "sampleHtml": "<tr><td>当前位置：<a href=\"/index.html\" class=\"bt_link\">首页</a></td><td> &gt; <a href=\"/col/col1229118607/index.html\" class=\"bt_link\"> 政府信息公开 </a> &gt; <a href=\"/col/col1389507/index.html\" class=\"bt_link\"> 法定主动公开内容 </a> &gt; <a href=\"/col/col1229116927/index.html\" c"
+  },
+  {
+    "id": "sichuan_pta",
+    "ok": false,
+    "reason": "no column found"
+  },
+  {
+    "id": "guizhou_hrss",
+    "name": "贵州省人力资源和社会保障厅",
+    "region": "贵州",
+    "ok": true,
+    "columnText": "事业单位公开招聘",
+    "columnUrl": "https://rst.guizhou.gov.cn/zwgk/zdlyxx/sydwgkzp/",
+    "pageTitle": "贵州人力资源和社会保障网-事业单位公开招聘",
+    "container": "ul#Left_Nav",
+    "itemCount": 23,
+    "hasDate": false,
+    "firstItem": {
+      "text": "权责清单",
+      "title": "权责清单",
+      "href": "https://rst.guizhou.gov.cn/zwgk/zdlyxx/qzqd_5750830/",
+      "dateSelector": null
+    },
+    "pagination": null,
+    "sampleHtml": "<li class=\"li 5750830\"><a href=\"https://rst.guizhou.gov.cn/zwgk/zdlyxx/qzqd_5750830/\" title=\"权责清单\">权责清单</a></li>"
+  },
+  {
+    "id": "hunan_hrss",
+    "ok": false,
+    "reason": "no column found"
+  },
+  {
+    "id": "hubei_hrss",
+    "name": "湖北省人力资源和社会保障厅",
+    "region": "湖北",
+    "ok": true,
+    "columnText": "湖北省省直事业单位公开招聘",
+    "columnUrl": "https://rst.hubei.gov.cn/bmdt/ztzl/ywzl/hbsszsydwgkzp/",
+    "pageTitle": "湖北省省直事业单位公开招聘-湖北省人力资源和社会保障厅",
+    "container": "div.row.news.mb10",
+    "itemCount": 16,
+    "hasDate": true,
+    "firstItem": {
+      "text": "事业单位人事管理政策信息摘编 2026年第4期（总... 2026-07-28",
+      "title": "事业单位人事管理政策信息摘编 2026年第4期（总第45期）",
+      "href": "./zcfgjjyjl/202607/t20260728_5985014.shtml",
+      "dateSelector": "span.date"
+    },
+    "pagination": null,
+    "sampleHtml": "<li><a href=\"./zcfgjjyjl/202607/t20260728_5985014.shtml\" target=\"_blank\" title=\"事业单位人事管理政策信息摘编 2026年第4期（总第45期）\">事业单位人事管理政策信息摘编 2026年第4期（总... <span class=\"date\">2026-07-28</span></a></li>"
+  },
+  {
+    "id": "hebei_hrss",
+    "ok": false,
+    "reason": "no column found"
+  },
+  {
+    "id": "henan_hrss",
+    "name": "河南省人力资源和社会保障厅",
+    "region": "河南",
+    "ok": true,
+    "columnText": "·河南省人力资源和社会保障厅所属事业单位（河南省就业创业服务中心河南省高层次人才服务中心）2026...[2026-07-24]",
+    "columnUrl": "http://hrss.henan.gov.cn/2026/07-24/3378916.html",
+    "pageTitle": "河南省人力资源和社会保障厅所属事业单位（河南省就业创业服务中心  河南省高层次人才服务中心）2026",
+    "err": "no container",
+    "container": null,
+    "itemCount": 0,
+    "hasDate": false,
+    "firstItem": {
+      "text": "",
+      "title": "",
+      "href": "",
+      "dateSelector": null
+    },
+    "pagination": null,
+    "sampleHtml": ""
+  },
+  {
+    "id": "yunnan_hrss",
+    "name": "云南省人力资源和社会保障厅",
+    "region": "云南",
+    "ok": true,
+    "columnText": "事业单位",
+    "columnUrl": "https://hrss.yn.gov.cn/NewsLsit.aspx?ClassID=602",
+    "pageTitle": "事业单位招聘 云南省人力资源和社会保障政务门户",
+    "container": "table",
+    "itemCount": 27,
+    "hasDate": true,
+    "firstItem": {
+      "text": "首页",
+      "title": "",
+      "href": "/index.html",
+      "dateSelector": "span"
+    },
+    "pagination": null,
+    "sampleHtml": "<tr> <td style=\" vertical-align:top\"> <div class=\"listBox mt5\" style=\"width:785px; position:relative\"> <h1> <a href=\"/index.html\">首页</a> &gt; <a href=\"/NewsLsit.aspx?classid=458\">招考招聘</a> &gt; <a href=\"/NewsLsit.aspx?classid=602\">事业单位招聘</a> &gt; 列表</h1> <ul cl"
+  },
+  {
+    "id": "guangxi_pta",
+    "name": "广西人事考试院",
+    "region": "广西",
+    "ok": true,
+    "columnText": "区直事业单位招聘",
+    "columnUrl": "https://www.gxpta.com.cn/ksxm/sydwzpks/",
+    "pageTitle": "区直事业单位招聘 - 广西人事考试网",
+    "container": "ul.articles",
+    "itemCount": 15,
+    "hasDate": true,
+    "firstItem": {
+      "text": "关于做好自治区直属机关事业单位委托发布信息工作的通知",
+      "title": "关于做好自治区直属机关事业单位委托发布信息工作的通知",
+      "href": "./t284.html",
+      "dateSelector": null
+    },
+    "pagination": null,
+    "sampleHtml": "<li class=\"\"><a href=\"./t284.html\" target=\"_blank\" title=\"关于做好自治区直属机关事业单位委托发布信息工作的通知\">关于做好自治区直属机关事业单位委托发布信息工作的通知</a> <span>[2023-07-05]</span></li>"
+  },
+  {
+    "id": "liaoning_pta",
+    "name": "辽宁人事考试网",
+    "region": "辽宁",
+    "ok": true,
+    "columnText": "2026年辽宁省事业单位集中面向社会公开招聘工作人员笔试考试费减免和姓名修改（实名认证未通",
+    "columnUrl": "https://www.lnrsks.com/html/sydw_zhongyaotongzhi/7051.html",
+    "pageTitle": "2026年辽宁省事业单位集中面向社会公开招聘工作人员笔试考试费减免和姓名修改（实名认证未通过）办理说",
+    "container": "ul#three.treeview",
+    "itemCount": 8,
+    "hasDate": false,
+    "firstItem": {
+      "text": "考试通知",
+      "title": "考试通知",
+      "href": "/html/kaoshitongzhi/",
+      "dateSelector": null
+    },
+    "pagination": null,
+    "sampleHtml": "<li id=\"a61\"> <a href=\"/html/kaoshitongzhi/\" title=\"考试通知\"> <p>考试通知</p> </a> </li>"
+  },
+  {
+    "id": "xinjiang_hrss",
+    "name": "新疆维吾尔自治区人力资源和社会保障厅",
+    "region": "新疆",
+    "ok": true,
+    "columnText": "事业单位",
+    "columnUrl": "https://rst.xinjiang.gov.cn/xjrst/c112746/list.shtml",
+    "pageTitle": "事业单位_新疆维吾尔自治区人力资源和社会保障厅",
+    "container": "ul",
+    "itemCount": 5,
+    "hasDate": false,
+    "firstItem": {
+      "text": "",
+      "title": "",
+      "href": "",
+      "dateSelector": null
+    },
+    "pagination": null,
+    "sampleHtml": "<li class=\"clearfix1 itm\"><span class=\"fl cur-date\"></span></li>"
+  },
+  {
+    "id": "heilongjiang_hrss",
+    "name": "黑龙江省人力资源和社会保障厅",
+    "region": "黑龙江",
+    "ok": true,
+    "columnText": "黑龙江省人力资源和社会保障厅2026年下半年事业单位公开招聘工作人员公告2026-08-18",
+    "columnUrl": "https://hrss.hlj.gov.cn/hrss/c111741/202608/c00_31968123.shtml",
+    "pageTitle": "黑龙江省人力资源和社会保障厅2026年<br>下半年事业单位公开招聘工作人员公告_通知公告_黑龙江省",
+    "container": "ul.xglj",
+    "itemCount": 5,
+    "hasDate": false,
+    "firstItem": {
+      "text": "中央政府和国家部委网站",
+      "title": "",
+      "href": "javascript:;",
+      "dateSelector": null
+    },
+    "pagination": null,
+    "sampleHtml": "<li class=\"selectdiv\"> <a href=\"javascript:;\"> <span>中央政府和国家部委网站</span> <img src=\"/hrss/xhtml/rst2025/static/images/footxl.png\"> </a> <div class=\"xlcont\"> <ul> <li> <a href=\"http://www.gov.cn/\" target=\"_blank\" title=\"中国政府网\"> 中国政府网 </a> </li> <li> <a href=\"http"
+  },
+  {
+    "id": "jilin_hrss",
+    "name": "吉林省人力资源和社会保障厅",
+    "region": "吉林",
+    "ok": true,
+    "columnText": "事业单位人事管理",
+    "columnUrl": "https://hrss.jl.gov.cn/rsrc/sydwrsgl/",
+    "pageTitle": "事业单位人事管理",
+    "container": "ul",
+    "itemCount": 10,
+    "hasDate": true,
+    "firstItem": {
+      "text": "登录",
+      "title": "",
+      "href": "javascript:void(0)",
+      "dateSelector": null
+    },
+    "pagination": null,
+    "sampleHtml": "<li><a target=\"_self\" href=\"javascript:void(0)\" id=\"loginBtn\">登录</a></li>"
+  },
+  {
+    "id": "shanxi_hrss",
+    "name": "山西省人力资源和社会保障厅",
+    "region": "山西",
+    "ok": true,
+    "columnText": "事业单位公开招聘信息",
+    "columnUrl": "https://rst.shanxi.gov.cn/ztzl/zpxx/",
+    "pageTitle": "山西省人力资源和社会保障厅",
+    "container": "ul.clearfix",
+    "itemCount": 6,
+    "hasDate": false,
+    "firstItem": {
+      "text": "首页",
+      "title": "",
+      "href": "https://rst.shanxi.gov.cn/",
+      "dateSelector": null
+    },
+    "pagination": null,
+    "sampleHtml": "<li><a href=\"https://rst.shanxi.gov.cn/\">首页</a></li>"
+  },
+  {
+    "id": "inner_mongolia_hrss",
+    "name": "内蒙古自治区人力资源和社会保障厅",
+    "region": "内蒙古",
+    "ok": true,
+    "columnText": "推进事业单位工资制度改革——《人力资源和社会保...",
+    "columnUrl": "https://rst.nmg.gov.cn/xwzx/yw/202608/t20260818_2941911.html",
+    "pageTitle": "推进事业单位工资制度改革——《人力资源和社会保障事业发展“十五五”规划》系列解读",
+    "container": "ul",
+    "itemCount": 4,
+    "hasDate": false,
+    "firstItem": {
+      "text": "内蒙古自治区人民政府网站",
+      "title": "",
+      "href": "https://www.nmg.gov.cn",
+      "dateSelector": null
+    },
+    "pagination": {
+      "type": "static-file",
+      "pattern": "https://rst.nmg.gov.cn/index_{page}.html"
+    },
+    "sampleHtml": "<li><a href=\"https://www.nmg.gov.cn\" target=\"_blank\"><img src=\"../../../material/2022gbstyle/img/guohui.png\"> 内蒙古自治区人民政府网站</a></li>"
+  },
+  {
+    "id": "hainan_hrss",
+    "name": "海南省人力资源和社会保障厅",
+    "region": "海南",
+    "ok": true,
+    "columnText": "事业单位公开招聘信息",
+    "columnUrl": "https://hrss.hainan.gov.cn/hrss/sydwzp/list3.shtml?ddtab=true",
+    "pageTitle": "事业单位公开招聘信息_海南省人力资源和社会保障厅",
+    "container": "ul",
+    "itemCount": 8,
+    "hasDate": false,
+    "firstItem": {
+      "text": "网站首页",
+      "title": "",
+      "href": "/mhrss/mindex.shtml",
+      "dateSelector": null
+    },
+    "pagination": null,
+    "sampleHtml": "<li><a href=\"/mhrss/mindex.shtml\" target=\"_parent\">网站首页</a></li>"
+  },
+  {
+    "id": "ningxia_pta",
+    "name": "宁夏人事考试中心",
+    "region": "宁夏",
+    "ok": true,
+    "columnText": "宁夏回族自治区2026年事业单位公开招聘取消和核减部分岗位招聘计划公告",
+    "columnUrl": "https://www.nxpta.com/sydwzk/202602/t20260204_5081927.html",
+    "pageTitle": "宁夏回族自治区人事考试中心",
+    "container": "ul",
+    "itemCount": 10,
+    "hasDate": false,
+    "firstItem": {
+      "text": "首  页",
+      "title": "",
+      "href": "/index.html",
+      "dateSelector": null
+    },
+    "pagination": null,
+    "sampleHtml": "<li> <a href=\"/index.html\" target=\"_blank\">首&nbsp;&nbsp;页</a> </li>"
+  },
+  {
+    "id": "qgsydw",
+    "ok": false,
+    "reason": "no column found"
+  },
+  {
+    "id": "chongqing_hrss",
+    "name": "重庆市人力资源和社会保障局",
+    "region": "重庆",
+    "ok": true,
+    "columnText": "重庆工业职业技术大学2026年考核招聘事业单位工作人员公告（第二批）",
+    "columnUrl": "https://rlsbj.cq.gov.cn/zwxx_182/sydw/sydwgkzp2026/202607/t20260706_15802633.html",
+    "pageTitle": "重庆工业职业技术大学2026年考核招聘事业单位工作人员公告（第二批）_重庆市人力资源和社会保障局",
+    "container": "ul.drop-lists",
+    "itemCount": 42,
+    "hasDate": false,
+    "firstItem": {
+      "text": "外交部",
+      "title": "",
+      "href": "http://www.mfa.gov.cn/",
+      "dateSelector": null
+    },
+    "pagination": null,
+    "sampleHtml": "<li><a href=\"http://www.mfa.gov.cn/\" target=\"_blank\">外交部</a></li>"
+  }
+]

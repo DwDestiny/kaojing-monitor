@@ -51,6 +51,16 @@ export function formatDateTime(iso: string | null | undefined): string {
   return `${y}-${m}-${day} ${h}:${min}`;
 }
 
+/**
+ * 缺失值语义渲染（P1-05 is_known 四态）
+ * 有值 → 原值；isKnown=na/none → "无"（明确不适用/无）；isKnown=unknown 或未知 → "待确认"（原文未公布）
+ */
+export function formatKnown(value: string | null | undefined, isKnown?: string | null): string {
+  if (value && value.trim()) return value;
+  if (isKnown === "na" || isKnown === "none") return "无";
+  return "待确认";
+}
+
 /** 构建带筛选参数的查询字符串 */
 export function buildQueryString(
   params: Record<string, string | number | undefined | null>

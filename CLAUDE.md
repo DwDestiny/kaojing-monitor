@@ -30,9 +30,10 @@
 - **部署**：Cloudflare Pages（GitHub 自动构建）
 
 ### 数据采集
-- **通用爬虫引擎**：`api/src/crawler/engine.js`
-- **网站配置**：JSON 配置驱动，8 个数据源（山东、江苏、福建、天津、新疆、北京、广东人社厅）
-- **翻页模式**：4 种（URL 模式、点击、滚动、无翻页）
+- **通用爬虫引擎**：`crawlers/core/engine.js`（P1 扩展：GBK 解码/pageOffset 页码偏移/offset 参数分页/日期拆分拼接/无日期兜底）
+- **网站配置**：`crawlers/config/sites.json`，**28 个源（25 启用 + 3 备用）**：山东、江苏、福建、天津、新疆(2)、北京(2)、广东、上海、重庆、贵州、湖北、湖南、河南、四川、云南、广西、山西、内蒙古、吉林、辽宁、海南、宁夏、全国事业单位招聘网等
+- **禁用源**（需 API 模式适配）：浙江（jcms JS 渲染）、河北（Vue SPA）、黑龙江（无招聘专版）
+- **翻页模式**：4 种（static-file / url-param / single / hybrid）+ pageOffset / paginationParamName / paginationStep 扩展
 
 ---
 

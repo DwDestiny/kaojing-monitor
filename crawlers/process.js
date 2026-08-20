@@ -363,6 +363,11 @@ export async function processData(siteConfig, options = {}) {
   const rawData = await crawl(siteConfig, options);
   console.log(`  ✓ 爬取 ${rawData.length} 条`);
 
+  // 合规分级：给每条数据打上来源合规级别（safe/attribution/restricted），供 upload/API 层按级处理
+  for (const it of rawData) {
+    it.complianceLevel = siteConfig.complianceLevel || 'safe';
+  }
+
   // 2. 纯规则内容过滤（黑名单 + 白名单，不调用 AI）
   console.log('  [2/6] 内容过滤...');
   const { filtered, stats: filterStats } = await filterAnnouncements(rawData);
@@ -382,7 +387,7 @@ export async function processData(siteConfig, options = {}) {
 
   console.log(`  [3.5/6] 过滤旧公告（保留 ${cutoffDate} 之后发布的）...`);
   const beforeFilter = withDetails.length;
-  const recentAnnouncements = withDetails.filter(item => {
+  let recentAnnouncements = withDetails.filter(item => {
     const pubDate = item.publishDate; // 'YYYY-MM-DD' 格式
     return pubDate && pubDate >= cutoffDate;
   });

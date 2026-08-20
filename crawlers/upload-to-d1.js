@@ -59,6 +59,7 @@ const items = data.map((item) => ({
   crawledAt: item.crawledAt || item.crawled_at,
   rawHtml: item.rawHtml,
   complianceLevel: item.complianceLevel,
+  isKnown: item.is_known || item.isKnown,
 }));
 
 // 4. POST /api/import（分片上传，每片 100 条，避免请求体过大）

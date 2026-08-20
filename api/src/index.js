@@ -238,7 +238,9 @@ async function getAnnouncements(request, env) {
     salaryRange: row.salary_range,
     publishDate: row.publish_date,
     examNote: row.exam_note,
-    crawledAt: row.crawled_at
+    crawledAt: row.crawled_at,
+    complianceLevel: row.compliance_level,
+    isKnown: row.is_known
   }));
 
   return jsonResponse({
@@ -283,7 +285,10 @@ async function getAnnouncementById(id, env) {
     salaryRange: result.salary_range,
     publishDate: result.publish_date,
     crawledAt: result.crawled_at,
-    rawHtml: result.raw_html
+    rawHtml: result.raw_html,
+    // P1（2026-08-20）：合规分级 + 缺失值语义（列迁移后生效，未迁移时 undefined）
+    complianceLevel: result.compliance_level,
+    isKnown: result.is_known
   };
 
   return jsonResponse({ data: mappedData });
@@ -920,8 +925,8 @@ async function importAnnouncements(request, env) {
         (title, url, url_hash, content_hash, source_website_id, source, region,
          recruit_count, exam_date, exam_time, exam_subjects, exam_type, exam_category,
          exam_location, registration_deadline, salary_range, publish_date, exam_note,
-         crawled_at, extracted_at, status, raw_html)
-      VALUES (?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, 'active', ?)
+         crawled_at, extracted_at, status, raw_html, is_known, compliance_level)
+      VALUES (?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?)
     `).bind(
       item.title,
       item.url,
@@ -941,7 +946,9 @@ async function importAnnouncements(request, env) {
       item.examNote || null,
       crawledAt,
       new Date().toISOString(),
-      rawHtml
+      rawHtml,
+      item.isKnown || 'unknown',
+      item.complianceLevel || 'safe'
     );
     statements.push(stmt);
   }

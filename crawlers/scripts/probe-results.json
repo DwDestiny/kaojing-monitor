@@ -1,0 +1,278 @@
+[
+  {
+    "id": "hebei_hrss",
+    "name": "河北省人力资源和社会保障厅",
+    "home": "https://rst.hebei.gov.cn/",
+    "ok": true,
+    "status": 200,
+    "type": "text/html",
+    "size": "2625",
+    "ms": 85,
+    "finalUrl": "https://rst.hebei.gov.cn/"
+  },
+  {
+    "id": "shanxi_hrss",
+    "name": "山西省人力资源和社会保障厅",
+    "home": "https://rst.shanxi.gov.cn/",
+    "ok": true,
+    "status": 200,
+    "type": "text/html",
+    "size": "?",
+    "ms": 109,
+    "finalUrl": "https://rst.shanxi.gov.cn/"
+  },
+  {
+    "id": "heilongjiang_hrss",
+    "name": "黑龙江省人力资源和社会保障厅",
+    "home": "https://hrss.hlj.gov.cn/",
+    "ok": true,
+    "status": 200,
+    "type": "text/html",
+    "size": "?",
+    "ms": 150,
+    "finalUrl": "https://hrss.hlj.gov.cn/"
+  },
+  {
+    "id": "zhejiang_hrss",
+    "name": "浙江省人力资源和社会保障厅",
+    "home": "https://rlsbt.zj.gov.cn/",
+    "ok": true,
+    "status": 200,
+    "type": "text/html",
+    "size": "?",
+    "ms": 159,
+    "finalUrl": "https://rlsbt.zj.gov.cn/"
+  },
+  {
+    "id": "hubei_hrss",
+    "name": "湖北省人力资源和社会保障厅",
+    "home": "https://rst.hubei.gov.cn/",
+    "ok": true,
+    "status": 200,
+    "type": "text/html",
+    "size": "?",
+    "ms": 160,
+    "finalUrl": "https://rst.hubei.gov.cn/"
+  },
+  {
+    "id": "hainan_hrss",
+    "name": "海南省人力资源和社会保障厅",
+    "home": "https://hrss.hainan.gov.cn/",
+    "ok": true,
+    "status": 200,
+    "type": "text/html",
+    "size": "?",
+    "ms": 179,
+    "finalUrl": "https://hrss.hainan.gov.cn/"
+  },
+  {
+    "id": "hunan_hrss",
+    "name": "湖南省人力资源和社会保障厅",
+    "home": "https://rst.hunan.gov.cn/",
+    "ok": true,
+    "status": 200,
+    "type": "text/html",
+    "size": "?",
+    "ms": 195,
+    "finalUrl": "https://rst.hunan.gov.cn/"
+  },
+  {
+    "id": "henan_hrss",
+    "name": "河南省人力资源和社会保障厅",
+    "home": "https://hrss.henan.gov.cn/",
+    "ok": true,
+    "status": 200,
+    "type": "text/html",
+    "size": "?",
+    "ms": 197,
+    "finalUrl": "https://hrss.henan.gov.cn/"
+  },
+  {
+    "id": "qgsydw",
+    "name": "全国事业单位招聘网",
+    "home": "https://www.qgsydw.com/",
+    "ok": true,
+    "status": 200,
+    "type": "text/html",
+    "size": "783",
+    "ms": 204,
+    "finalUrl": "https://www.qgsydw.com/"
+  },
+  {
+    "id": "yunnan_hrss",
+    "name": "云南省人力资源和社会保障厅",
+    "home": "https://hrss.yn.gov.cn/",
+    "ok": true,
+    "status": 200,
+    "type": "text/html",
+    "size": "23573",
+    "ms": 223,
+    "finalUrl": "https://hrss.yn.gov.cn/"
+  },
+  {
+    "id": "chongqing_hrss",
+    "name": "重庆市人力资源和社会保障局",
+    "home": "https://rlsbj.cq.gov.cn/",
+    "ok": true,
+    "status": 200,
+    "type": "text/html",
+    "size": "?",
+    "ms": 237,
+    "finalUrl": "https://rlsbj.cq.gov.cn/"
+  },
+  {
+    "id": "shanghai_hrss",
+    "name": "上海市人力资源和社会保障局",
+    "home": "https://rsj.sh.gov.cn/",
+    "ok": true,
+    "status": 200,
+    "type": "text/html",
+    "size": "?",
+    "ms": 244,
+    "finalUrl": "https://rsj.sh.gov.cn/"
+  },
+  {
+    "id": "sichuan_pta",
+    "name": "四川省人事考试中心",
+    "home": "https://www.scpta.com.cn/",
+    "ok": true,
+    "status": 200,
+    "type": "text/html",
+    "size": "252",
+    "ms": 249,
+    "finalUrl": "https://www.scpta.com.cn/"
+  },
+  {
+    "id": "liaoning_pta",
+    "name": "辽宁人事考试网",
+    "home": "https://www.lnrsks.com/",
+    "ok": true,
+    "status": 200,
+    "type": "text/html",
+    "size": "14838",
+    "ms": 250,
+    "finalUrl": "https://www.lnrsks.com/"
+  },
+  {
+    "id": "guizhou_hrss",
+    "name": "贵州省人力资源和社会保障厅",
+    "home": "https://rst.guizhou.gov.cn/",
+    "ok": true,
+    "status": 200,
+    "type": "text/html",
+    "size": "?",
+    "ms": 257,
+    "finalUrl": "https://rst.guizhou.gov.cn/"
+  },
+  {
+    "id": "inner_mongolia_hrss",
+    "name": "内蒙古自治区人社厅",
+    "home": "https://rst.nmg.gov.cn/",
+    "ok": true,
+    "status": 200,
+    "type": "text/html",
+    "size": "?",
+    "ms": 297,
+    "finalUrl": "https://rst.nmg.gov.cn/"
+  },
+  {
+    "id": "guangxi_pta",
+    "name": "广西人事考试院",
+    "home": "https://www.gxpta.com.cn/",
+    "ok": true,
+    "status": 200,
+    "type": "text/html",
+    "size": "?",
+    "ms": 361,
+    "finalUrl": "https://www.gxpta.com.cn/"
+  },
+  {
+    "id": "xinjiang_hrss",
+    "name": "新疆维吾尔自治区人社厅",
+    "home": "https://rst.xinjiang.gov.cn/",
+    "ok": true,
+    "status": 200,
+    "type": "text/html",
+    "size": "?",
+    "ms": 366,
+    "finalUrl": "https://rst.xinjiang.gov.cn/"
+  },
+  {
+    "id": "jilin_hrss",
+    "name": "吉林省人力资源和社会保障厅",
+    "home": "https://hrss.jl.gov.cn/",
+    "ok": true,
+    "status": 200,
+    "type": "text/html",
+    "size": "113653",
+    "ms": 534,
+    "finalUrl": "https://hrss.jl.gov.cn/"
+  },
+  {
+    "id": "ningxia_pta",
+    "name": "宁夏人事考试中心",
+    "home": "https://www.nxpta.com/",
+    "ok": true,
+    "status": 200,
+    "type": "text/html",
+    "size": "?",
+    "ms": 547,
+    "finalUrl": "https://www.nxpta.com/"
+  },
+  {
+    "id": "shaanxi_hrss",
+    "name": "陕西省人力资源和社会保障厅",
+    "home": "https://hrss.shaanxi.gov.cn/",
+    "ok": false,
+    "status": 0,
+    "err": "TypeError: fetch failed",
+    "ms": 4
+  },
+  {
+    "id": "anhui_apta",
+    "name": "安徽省人事考试网",
+    "home": "https://apta.gov.cn/",
+    "ok": false,
+    "status": 0,
+    "err": "TypeError: fetch failed",
+    "ms": 48
+  },
+  {
+    "id": "jiangxi_hrss",
+    "name": "江西省人力资源和社会保障厅",
+    "home": "https://rst.jiangxi.gov.cn/",
+    "ok": false,
+    "status": 0,
+    "err": "TypeError: fetch failed",
+    "ms": 104
+  },
+  {
+    "id": "gansu_hrss",
+    "name": "甘肃省人力资源和社会保障厅",
+    "home": "https://rst.gansu.gov.cn/",
+    "ok": false,
+    "status": 412,
+    "type": "text/html",
+    "size": "?",
+    "ms": 164,
+    "finalUrl": "https://rst.gansu.gov.cn/"
+  },
+  {
+    "id": "gxrc_sydw",
+    "name": "广西人才网事业单位",
+    "home": "https://sydw.gxrc.com/",
+    "ok": false,
+    "status": 0,
+    "err": "TypeError: fetch failed",
+    "ms": 199
+  },
+  {
+    "id": "qinghai_pta",
+    "name": "青海省人事考试信息网",
+    "home": "https://www.qhpta.com/ncms/index.shtml",
+    "ok": false,
+    "status": 0,
+    "err": "TypeError: fetch failed",
+    "ms": 329
+  }
+]

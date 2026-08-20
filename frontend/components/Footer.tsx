@@ -27,6 +27,10 @@ export default function Footer({ lastUpdate }: FooterProps) {
             提交新网站
           </Link>
         </p>
+        <p className="mx-auto mt-space-3 max-w-2xl leading-relaxed text-text-tertiary/80">
+          本平台仅对各地政府及官方机构公开发布的招考信息进行结构化聚合与展示，所有公告信息版权归原发布单位所有，
+          以官方发布为准。本平台不转载、不存储公告原文全文，仅展示事实性字段并提供原文链接。
+        </p>
       </div>
     </footer>
   );

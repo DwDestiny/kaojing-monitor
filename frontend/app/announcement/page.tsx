@@ -12,6 +12,7 @@ import { fetchAnnouncementById } from "@/lib/api";
 import {
   formatDateTime,
   formatExamSchedule,
+  formatKnown,
   formatRecruitCount,
   formatSubjects,
 } from "@/lib/format";
@@ -75,6 +76,7 @@ export default function AnnouncementPage() {
     crawledAt,
     source,
     badge,
+    isKnown,
   } = announcement;
 
   return (
@@ -146,9 +148,9 @@ export default function AnnouncementPage() {
             value={formatExamSchedule(examDate, examTime, examNote)}
           />
           <DetailRow label="考试科目" value={formatSubjects(examSubjects)} />
-          <DetailRow label="考试类型" value={examType ?? "待定"} />
-          <DetailRow label="地区" value={region ?? "待定"} />
-          <DetailRow label="发布日期" value={publishDate ?? "待定"} />
+          <DetailRow label="考试类型" value={formatKnown(examType, isKnown)} />
+          <DetailRow label="地区" value={formatKnown(region, isKnown)} />
+          <DetailRow label="发布日期" value={formatKnown(publishDate, isKnown)} />
           <DetailRow label="数据来源" value={source ?? "官方网站"} />
           <DetailRow label="采集时间" value={formatDateTime(crawledAt)} />
         </dl>

@@ -28,26 +28,50 @@ export function resolveUrl(baseUrl, relativeUrl) {
 
 /**
  * 统一日期格式为 YYYY-MM-DD
+ * 支持：
+ * - 标准格式 2026-08-17
+ * - 常见分隔 2026/08/17、2026.08.17
+ * - 从长文本提取（"发布时间：2026-08-14"、"[2026-08-06]"）
+ * - 年与月日拆分的拼接文本（辽宁人事考试网："2026" + "07-21" → "202607-21" → 2026-07-21）
  * @param {string} dateStr - 原始日期字符串
- * @returns {string} YYYY-MM-DD 格式
+ * @returns {string} YYYY-MM-DD 格式（解析失败返回原串）
  */
 export function parseDate(dateStr) {
   if (!dateStr) return '';
+  const s = String(dateStr).trim();
 
   // 已经是标准格式
-  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-    return dateStr;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    return s;
   }
 
-  // 尝试解析常见格式
-  // 2026-08-17, 2026/08/17, 2026.08.17
-  const match = dateStr.match(/(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
-  if (match) {
-    const [, year, month, day] = match;
+  // 常见格式（含从长文本/方括号中提取）
+  // 2026-08-17, 2026/08/17, 2026.08.17, 发布时间：2026-08-14, [2026-08-06]
+  const full = s.match(/(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
+  if (full) {
+    const [, year, month, day] = full;
     return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
   }
 
-  return dateStr;
+  // 年与月日拆分（辽宁："202607-21" 来自 "2026" + "07-21"）
+  const yearMatch = s.match(/(\d{4})/);
+  const mdMatch = s.match(/(\d{1,2})[-/.](\d{1,2})/);
+  if (yearMatch && mdMatch) {
+    // 排除纯年份串本身被当"年+月日"误解析（"2026" 无月日）
+    const yearOnly = /^\d{4}$/.test(s);
+    if (!yearOnly) {
+      const [, year] = yearMatch;
+      const [, month, day] = mdMatch;
+      // 校验月日范围，避免把 2026 拆成 20-26
+      const m = parseInt(month, 10);
+      const d = parseInt(day, 10);
+      if (m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+        return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      }
+    }
+  }
+
+  return s;
 }
 
 /**

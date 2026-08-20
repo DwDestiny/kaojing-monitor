@@ -1,6 +1,13 @@
 /**
  * 通用爬虫引擎
  * 支持配置化抓取多个政府招考网站
+ * 扩展（2026-08-20 P1 扩源）：
+ * - encoding: gbk/gb2312 编码支持（qgsydw 全国事业单位招聘网）
+ * - pageOffset: 静态分页页码偏移（guizhou/hubei createPageHTML 第2页为 index_1.html → offset=-1）
+ * - paginationParamName/paginationStep: url-param 分页自定义参数（henan offset=30 步进）
+ * - titleAttr='text': 强制取文本（qgsydw span.title 带假 title 属性）
+ * - dateSelector '|' 分隔多元素: 拆分年/月日拼接（liaoning）
+ * - defaultDate='today': 列表无日期时用采集当天（sichuan 专题页）
  */
 
 import axios from 'axios';
@@ -14,6 +21,78 @@ import {
   extractFromHtml,
   retryWithBackoff
 } from './utils.js';
+
+/**
+ * 构造分页 URL（static-file 与 url-param 统一入口）
+ * 支持 pageOffset（静态文件页码偏移）与 paginationParamName/paginationStep（参数分页步进）
+ * @param {Object} siteConfig
+ * @param {number} page - 页号（从 1 开始）
+ * @returns {string} 分页 URL
+ */
+export function buildPageUrl(siteConfig, page) {
+  const { listPageUrl, paginationType, paginationPattern, pageOffset = 0 } = siteConfig;
+  if (page <= 1) return listPageUrl;
+
+  if (paginationType === 'url-param') {
+    const paramName = siteConfig.paginationParamName || 'page';
+    const step = siteConfig.paginationStep || 1;
+    // 语义：标准 page 参数从 1 开始递增（云南 ?page=2）；offset 类按步进从 0 累加（河南 ?offset=30）
+    const value = step === 1 ? page : (page - 1) * step;
+    const sep = listPageUrl.includes('?') ? '&' : '?';
+    return `${listPageUrl}${sep}${paramName}=${value}`;
+  }
+
+  // static-file / hybrid：替换文件名中的 {page}，支持页码偏移
+  const pageName = paginationPattern.replace('{page}', page + pageOffset);
+  return listPageUrl.replace(/\/[^/]+$/, `/${pageName}`);
+}
+
+/**
+ * 按 encoding 解码响应体（utf-8 默认 / gbk / gb2312）
+ * @param {ArrayBuffer|Buffer} data
+ * @param {string} encoding
+ * @returns {string}
+ */
+export function decodeHtml(data, encoding = 'utf-8') {
+  const buf = Buffer.isBuffer(data) ? data : Buffer.from(data);
+  if (encoding === 'utf-8') return buf.toString('utf-8');
+  if (/gbk|gb2312/i.test(encoding)) {
+    try {
+      return new TextDecoder('gbk').decode(buf);
+    } catch (e) {
+      return buf.toString('utf-8');
+    }
+  }
+  return buf.toString('utf-8');
+}
+
+/**
+ * 从条目中提取发布日期
+ * 支持：
+ * - 单个选择器（普通源）
+ * - '|' 分隔多元素（年/月日拆分的源，如辽宁），各元素文本拼接后交给 parseDate
+ * - defaultDate='today' 兜底（列表无日期元素，如四川专题页）
+ * @param {Object} $ - Cheerio 实例
+ * @param {Object} $item - 条目元素
+ * @param {string} dateSelector
+ * @param {string} defaultDate
+ * @returns {string} YYYY-MM-DD 或 ''
+ */
+export function extractDate($, $item, dateSelector, defaultDate) {
+  if (dateSelector) {
+    const parts = String(dateSelector).split('|').filter(Boolean);
+    if (parts.length > 1) {
+      // 多元素：各元素文本直接拼接（辽宁 "2026" + "07-21" → "202607-21"）
+      const joined = parts.map(p => extractFromHtml($, $item, p)).join('');
+      return parseDate(joined);
+    }
+    return parseDate(extractFromHtml($, $item, dateSelector));
+  }
+  if (defaultDate === 'today') {
+    return new Date().toISOString().split('T')[0];
+  }
+  return '';
+}
 
 /**
  * 通用爬虫函数
@@ -134,26 +213,17 @@ async function crawlApi(siteConfig, options) {
 
 /**
  * 静态文件分页爬取（广东、北京、新疆等）
+ * 分页 URL 统一走 buildPageUrl（支持 pageOffset 页码偏移）
  */
 async function crawlStaticFile(siteConfig, options) {
-  const { listPageUrl, paginationPattern, maxPages = 1 } = siteConfig;
+  const { listPageUrl, maxPages = 1 } = siteConfig;
   const pagesToCrawl = options.maxPages || maxPages;
   const results = [];
 
-  console.log(`  📄 静态文件分页模式: ${paginationPattern}`);
+  console.log(`  📄 静态文件分页模式: ${siteConfig.paginationPattern}`);
 
   for (let page = 1; page <= pagesToCrawl; page++) {
-    let pageUrl;
-
-    if (page === 1) {
-      // 第一页通常是 index.html 或 index.shtml
-      pageUrl = listPageUrl;
-    } else {
-      // 替换 {page} 占位符
-      const pageName = paginationPattern.replace('{page}', page);
-      // 将 listPageUrl 的文件名替换为分页文件名
-      pageUrl = listPageUrl.replace(/\/[^\/]+$/, `/${pageName}`);
-    }
+    const pageUrl = buildPageUrl(siteConfig, page);
 
     console.log(`  📄 爬取第 ${page} 页: ${pageUrl}`);
 
@@ -184,17 +254,18 @@ async function crawlStaticFile(siteConfig, options) {
 }
 
 /**
- * URL 参数分页爬取（北京市级机关）
+ * URL 参数分页爬取（北京市级机关、云南、河南）
+ * 参数名/步进可配置：paginationParamName（默认 page）/ paginationStep（默认 1）
  */
 async function crawlUrlParam(siteConfig, options) {
-  const { listPageUrl, maxPages = 1 } = siteConfig;
+  const { maxPages = 1 } = siteConfig;
   const pagesToCrawl = options.maxPages || maxPages;
   const results = [];
 
-  console.log(`  📄 URL 参数分页模式`);
+  console.log(`  📄 URL 参数分页模式（${siteConfig.paginationParamName || 'page'} 参数）`);
 
   for (let page = 1; page <= pagesToCrawl; page++) {
-    const pageUrl = page === 1 ? listPageUrl : `${listPageUrl}?page=${page}`;
+    const pageUrl = buildPageUrl(siteConfig, page);
 
     console.log(`  📄 爬取第 ${page} 页: ${pageUrl}`);
 
@@ -261,25 +332,25 @@ async function fetchAndParse(url, siteConfig) {
     titleAttr,
     urlSelector,
     urlAttr,
-    dateSelector
+    dateSelector,
+    defaultDate
   } = siteConfig;
 
-  // 带重试的请求
+  // 带重试的请求（arraybuffer 模式，按 encoding 解码，支持 GBK/GB2312）
   const html = await retryWithBackoff(async () => {
     const response = await axios.get(url, {
       timeout: 10000,
       headers: {
         'User-Agent': 'KaoQingBot/1.0 (Recruitment Info Aggregator; Contact: admin@example.com)'
       },
-      responseType: 'text',
-      transformResponse: [(data) => data]
+      responseType: 'arraybuffer'
     });
 
-    if (typeof response.data !== 'string' || response.data.length === 0) {
-      throw new Error('响应内容为空或非 HTML 文本');
+    if (!response.data || response.data.length === 0) {
+      throw new Error('响应内容为空');
     }
 
-    return response.data;
+    return decodeHtml(response.data, encoding);
   });
 
   // 解析 HTML
@@ -302,11 +373,14 @@ async function fetchAndParse(url, siteConfig) {
     // 提取标题
     let title = '';
     if (titleSelector) {
-      if (titleAttr) {
-        title = extractFromHtml($, $item, titleSelector, titleAttr);
+      const $titleEl = $item.find(titleSelector).first();
+      if (titleAttr === 'text') {
+        // titleAttr='text'：强制取元素文本（qgsydw span.title 带假 title="Title" 属性）
+        title = $titleEl.text().trim();
+      } else if (titleAttr) {
+        title = extractFromHtml($, $item, `${titleSelector}@${titleAttr}`);
       } else {
         // 优先取 title 属性，否则取文本
-        const $titleEl = $item.find(titleSelector).first();
         title = $titleEl.attr('title') || $titleEl.text().trim();
       }
     }
@@ -322,12 +396,8 @@ async function fetchAndParse(url, siteConfig) {
       itemUrl = resolveUrl(baseUrl || url, itemUrl);
     }
 
-    // 提取日期
-    let publishDate = '';
-    if (dateSelector) {
-      publishDate = extractFromHtml($, $item, dateSelector);
-      publishDate = parseDate(publishDate);
-    }
+    // 提取日期（支持多元素拼接 + defaultDate 兜底）
+    let publishDate = extractDate($, $item, dateSelector, defaultDate);
 
     // 跳过空标题或无链接的条目
     if (!title || !itemUrl) {
